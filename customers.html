@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customers</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+  body{background:#f5f7fa;color:#2c3e50;line-height:1.6;padding-top:80px;}
+  .container{max-width:1400px;margin:0 auto;padding:20px;}
+  .header{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;box-shadow:0 4px 15px rgba(0,0,0,0.2);}
+  .header h1{font-size:1.5rem;font-weight:600;margin:0;}
+  .header button{background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:500;font-size:0.9rem;}
+  .header button:hover{background:rgba(255,255,255,0.3);}
+  table{width:100%;border-collapse:collapse;margin-top:15px;display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table thead, table tbody, table tr{display:table;width:100%;table-layout:fixed;}
+  @media(max-width:768px){
+    body{padding-top:70px;}
+    .container{padding:10px;}
+    .header{padding:12px 15px;}
+    .header h1{font-size:1.2rem;}
+    .form-row{flex-direction:column;}
+    input,button{width:100%;font-size:16px;}
+    table{font-size:0.85rem;}
+  }
+  @media(max-width:480px){
+    body{padding-top:60px;}
+    .header h1{font-size:1rem;}
+    .header button{padding:6px 12px;font-size:0.85rem;}
+    table{font-size:0.8rem;}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Customers</h1>
+    <div style="display:flex;gap:10px;">
+      <button onclick="window.location.href='dashboard.html'">Dashboard</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div>
+    <h2>Add Customer</h2>
+    <div class="form-row" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+      <input id="c_name" placeholder="Name" style="flex:1; padding:6px;"/>
+      <input id="c_phone" placeholder="Phone" style="flex:1; padding:6px;"/>
+      <input id="c_address" placeholder="Address" style="flex:2; padding:6px;"/>
+      <button id="btnAdd" style="padding:6px 12px; background:#1abc9c; color:#fff; border:none; border-radius:4px;">Add</button>
+    </div>
+    <div id="c_msg" class="error" style="margin-bottom:10px;"></div>
+
+    <h3>All Customers</h3>
+    <table id="tblCustomers">
+      <thead>
+        <tr><th>Id</th><th>Name</th><th>Phone</th><th>Address</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+if(!requireAuthRedirect()) {}
+
+const API_CUSTOMERS = `${API_BASE}/customers`;
+
+document.getElementById("btnAdd").addEventListener("click", addCustomer);
+
+async function loadCustomers(){
+  const r = await fetchJson(API_CUSTOMERS, { method:"GET", headers: authHeader() });
+  if(!r.ok){ 
+    logError('loadCustomers', r);
+    showError("c_msg", getErrorMessage(r, "Failed to load customers")); 
+    return; 
+  }
+  const tbody = document.querySelector("#tblCustomers tbody"); tbody.innerHTML="";
+  (r.data||[]).forEach(c=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${escapeHtml(c.id)}</td><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.phone)}</td><td>${escapeHtml(c.address)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function addCustomer(){
+  clearMessage("c_msg");
+  const name = document.getElementById("c_name").value.trim();
+  const phone = document.getElementById("c_phone").value.trim();
+  const address = document.getElementById("c_address").value.trim();
+  
+  // Validate form data
+  const validation = validateCustomerForm({name, phone, address});
+  if(!validation.valid){
+    const errorMsg = validation.errors.map(e => e.message).join(', ');
+    showError("c_msg", errorMsg);
+    return;
+  }
+  
+  setButtonLoading("btnAdd", "Adding...");
+  showLoading("c_msg", "Adding customer...");
+  
+  const payload = { name, phone, address };
+  const r = await fetchJson(API_CUSTOMERS, { method:"POST", headers: authHeader(), body: JSON.stringify(payload) });
+  
+  removeButtonLoading("btnAdd");
+  if(handleApiError(r, "c_msg", "Failed to add customer")) return;
+  
+  showSuccess("c_msg", "Customer added successfully!");
+  document.getElementById("c_name").value=""; document.getElementById("c_phone").value=""; document.getElementById("c_address").value="";
+  
+  await loadCustomers();  // reload table
+  document.getElementById('tblCustomers').scrollIntoView({ behavior: 'smooth' }); // scroll to table
+}
+
+function logout(){ logoutAndRedirect(); }
+
+loadCustomers();
+</script>
+</body>
+</html>
+

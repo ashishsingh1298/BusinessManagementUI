@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bills</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+  body{background:#f5f7fa;color:#2c3e50;line-height:1.6;padding-top:80px;}
+  .container{max-width:1400px;margin:0 auto;padding:20px;}
+  .header{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;box-shadow:0 4px 15px rgba(0,0,0,0.2);}
+  .header h1{font-size:1.5rem;font-weight:600;margin:0;}
+  .header button{background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:500;font-size:0.9rem;}
+  .header button:hover{background:rgba(255,255,255,0.3);}
+  table{width:100%;border-collapse:collapse;margin-top:15px;display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table thead, table tbody, table tr{display:table;width:100%;table-layout:fixed;}
+  @media(max-width:768px){
+    body{padding-top:70px;}
+    .container{padding:10px;}
+    .header{padding:12px 15px;}
+    .header h1{font-size:1.2rem;}
+    .form-row{flex-direction:column;}
+    input,select,button{width:100%;font-size:16px;}
+    table{font-size:0.85rem;}
+  }
+  @media(max-width:480px){
+    body{padding-top:60px;}
+    .header h1{font-size:1rem;}
+    .header button{padding:6px 12px;font-size:0.85rem;}
+    table{font-size:0.8rem;}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Bills</h1>
+    <div style="display:flex;gap:10px;">
+      <button onclick="window.location.href='dashboard.html'">Dashboard</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div>
+    <h3>Add Bill</h3>
+    <div class="form-row">
+      <select id="bill_customer"></select>
+      <input id="bill_amount" placeholder="Amount" type="number" />
+      <input id="bill_notes" placeholder="Notes" />
+      <input id="bill_status" placeholder="Status (pending/paid/partial)" />
+      <button id="btnAddBill">Add</button>
+    </div>
+    <div id="bill_msg" class="error"></div>
+
+    <h3 style="margin-top:18px">All Bills</h3>
+    <table id="tblBills"><thead><tr><th>Id</th><th>CustomerId</th><th>Amount</th><th>Status</th><th>Notes</th></tr></thead><tbody></tbody></table>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+if(!requireAuthRedirect()) {}
+const API_CUSTOMERS = `${API_BASE}/customers`;
+const API_BILLS = `${API_BASE}/bills`;
+
+document.getElementById("btnAddBill").addEventListener("click", addBill);
+
+async function loadCustomersIntoSelect(){
+  const r = await fetchJson(API_CUSTOMERS, { method:"GET", headers: authHeader() });
+  const sel = document.getElementById("bill_customer"); sel.innerHTML="<option value=''>Select customer</option>";
+  (r.data||[]).forEach(c=>{
+    const opt = document.createElement("option"); opt.value = c.id; opt.text = `${c.id} - ${escapeHtml(c.name)}`; sel.appendChild(opt);
+  });
+}
+
+async function loadBills(){
+  const r = await fetchJson(API_BILLS, { method:"GET", headers: authHeader() });
+  const tbody = document.querySelector("#tblBills tbody"); tbody.innerHTML="";
+  (r.data||[]).forEach(b=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${escapeHtml(b.id)}</td><td>${escapeHtml(b.customerId)}</td><td>${escapeHtml(b.billAmount)}</td><td>${escapeHtml(b.status)}</td><td>${escapeHtml(b.notes||'')}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function addBill(){
+  clearMessage("bill_msg");
+  const customerId = parseInt(document.getElementById("bill_customer").value||"0");
+  const amount = parseFloat(document.getElementById("bill_amount").value||"0");
+  const notes = document.getElementById("bill_notes").value.trim() || "";
+  const status = document.getElementById("bill_status").value.trim() || "pending";
+  
+  // Validate form data
+  const validation = validateBillForm({customerId, billAmount: amount, notes, status});
+  if(!validation.valid){
+    const errorMsg = validation.errors.map(e => e.message).join(', ');
+    showError("bill_msg", errorMsg);
+    return;
+  }
+  
+  setButtonLoading("btnAddBill", "Adding...");
+  showLoading("bill_msg", "Adding bill...");
+  const payload = { customerId, billAmount: amount, notes, status };
+  const r = await fetchJson(API_BILLS, { method:"POST", headers: authHeader(), body: JSON.stringify(payload) });
+  removeButtonLoading("btnAddBill");
+  if(handleApiError(r, "bill_msg", "Failed to add bill")) return;
+  showSuccess("bill_msg", "Bill added successfully!");
+  document.getElementById("bill_amount").value = "";
+  document.getElementById("bill_notes").value = "";
+  document.getElementById("bill_status").value = "";
+  await loadBills();
+}
+
+function logout(){ logoutAndRedirect(); }
+
+loadCustomersIntoSelect();
+loadBills();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Admin Panel</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+  body{background:#f5f7fa;color:#2c3e50;line-height:1.6;padding-top:120px;} /* Will be updated by JS */
+  .container{max-width:1400px;margin:0 auto;padding:20px;}
+  
+  /* Fixed Header */
+  .header{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);color:#fff;box-shadow:0 4px 15px rgba(0,0,0,0.2);min-height:70px;}
+  .header h1{font-size:1.5rem;font-weight:600;letter-spacing:0.5px;margin:0;}
+  .header p{font-size:0.85rem;margin:5px 0 0 0;opacity:0.9;}
+  .header button{background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:500;transition:all 0.3s;font-size:0.9rem;white-space:nowrap;}
+  .header button:hover{background:rgba(255,255,255,0.3);}
+  .header > div{display:flex;flex-direction:column;}
+  
+  /* Fixed Navigation */
+  nav{position:fixed;top:70px;left:0;right:0;z-index:999;display:flex;gap:8px;background:#fff;padding:8px 20px;box-shadow:0 2px 10px rgba(0,0,0,0.1);overflow-x:auto;-webkit-overflow-scrolling:touch;min-height:50px;align-items:center;transition:top 0.3s ease;}
+  nav::-webkit-scrollbar{height:4px;}
+  nav::-webkit-scrollbar-track{background:#f1f1f1;}
+  nav::-webkit-scrollbar-thumb{background:#888;border-radius:2px;}
+  nav button{flex:1;min-width:120px;padding:10px 16px;background:#ecf0f1;color:#34495e;border:none;border-radius:8px;cursor:pointer;transition:all 0.3s;font-weight:500;font-size:0.9rem;white-space:nowrap;}
+  nav button:hover{background:#d5dbdb;transform:translateY(-2px);}
+  nav button.active{background:linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);color:#fff;box-shadow:0 4px 12px rgba(231,76,60,0.4);}
+  
+  /* Tab Content */
+  .tab-content{background:#fff;padding:30px;border-radius:12px;min-height:400px;box-shadow:0 4px 15px rgba(0,0,0,0.08);}
+  .tab-content h2{font-size:1.5rem;color:#2c3e50;margin-bottom:20px;font-weight:600;}
+  
+  /* Forms */
+  .form-row{display:flex;gap:12px;margin-bottom:15px;flex-wrap:wrap;}
+  input, select, textarea{padding:12px 15px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;transition:all 0.3s;background:#fff;}
+  input:focus, select:focus, textarea:focus{outline:none;border-color:#e74c3c;box-shadow:0 0 0 3px rgba(231,76,60,0.1);}
+  button{padding:12px 24px;border:none;background:linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);color:#fff;border-radius:8px;cursor:pointer;font-weight:500;transition:all 0.3s;box-shadow:0 4px 12px rgba(231,76,60,0.3);}
+  button:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(231,76,60,0.4);}
+  
+  /* Tables */
+  table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+  th,td{padding:12px 15px;text-align:left;border-bottom:1px solid #ecf0f1;font-size:0.95rem;}
+  th{background:linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);color:#fff;font-weight:600;text-transform:uppercase;font-size:0.85rem;letter-spacing:0.5px;}
+  tr:hover{background:#f8f9fa;}
+  tr:last-child td{border-bottom:none;}
+  
+  /* Status Badges */
+  .status-badge{padding:4px 12px;border-radius:12px;font-size:0.85rem;font-weight:500;display:inline-block;}
+  .status-active{background:#d4edda;color:#155724;}
+  .status-suspended{background:#fff3cd;color:#856404;}
+  .status-expired{background:#f8d7da;color:#721c24;}
+  
+  /* Cards */
+  .stat-card{background:#fff;padding:25px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.08);text-align:center;border-top:4px solid #e74c3c;}
+  .stat-card h3{font-size:2.5rem;font-weight:700;margin:10px 0;color:#2c3e50;}
+  .stat-card p{font-size:0.95rem;color:#7f8c8d;font-weight:500;text-transform:uppercase;letter-spacing:1px;}
+  
+  .error{color:#e74c3c;padding:10px;background:#f8d7da;border-radius:6px;margin:10px 0;}
+  .success{color:#155724;padding:10px;background:#d4edda;border-radius:6px;margin:10px 0;}
+  
+  /* Dark Mode CSS Variables */
+  :root {
+    --bg-primary: #f5f7fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f8f9fa;
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --text-tertiary: #34495e;
+    --border-color: #e0e0e0;
+    --shadow: rgba(0,0,0,0.08);
+  }
+  
+  [data-theme="dark"] {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #252525;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-tertiary: #d0d0d0;
+    --border-color: #404040;
+    --shadow: rgba(0,0,0,0.3);
+  }
+  
+  [data-theme="dark"] body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+  
+  [data-theme="dark"] .tab-content,
+  [data-theme="dark"] .stat-card,
+  [data-theme="dark"] table {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+  
+  [data-theme="dark"] nav {
+    background: var(--bg-secondary);
+  }
+  
+  [data-theme="dark"] nav button {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+  
+  [data-theme="dark"] input,
+  [data-theme="dark"] select,
+  [data-theme="dark"] textarea {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+  
+  [data-theme="dark"] tr:hover {
+    background: var(--bg-tertiary);
+  }
+  
+  /* Toast Notifications */
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    min-width: 300px;
+    max-width: 500px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  
+  .toast.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  
+  .toast-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .toast-icon {
+    font-size: 1.2rem;
+    font-weight: bold;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  
+  .toast-success .toast-icon {
+    background: #d4edda;
+    color: #155724;
+  }
+  
+  .toast-error .toast-icon {
+    background: #f8d7da;
+    color: #721c24;
+  }
+  
+  .toast-message {
+    flex: 1;
+    font-size: 0.95rem;
+  }
+  
+  .toast-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+  }
+  
+  /* Tables - Mobile Responsive */
+  table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table thead, table tbody, table tr{display:table;width:100%;table-layout:fixed;}
+  table thead{position:sticky;top:0;z-index:10;}
+  
+  /* Responsive Design */
+  @media(max-width:768px){
+    body{padding-top:160px;}
+    .container{padding:10px;}
+    .header{padding:12px 15px;}
+    .header h1{font-size:1.2rem;}
+    .header p{font-size:0.75rem;}
+    .header button{padding:6px 12px;font-size:0.85rem;}
+    
+    nav{top:60px;padding:6px 10px;gap:6px;}
+    nav button{padding:8px 12px;font-size:0.85rem;min-width:100px;}
+    
+    .tab-content{padding:15px;}
+    .tab-content h2{font-size:1.3rem;}
+    
+    .form-row{flex-direction:column;gap:10px;}
+    input, select, textarea{width:100%;font-size:16px;}
+    
+    table{font-size:0.85rem;}
+    th,td{padding:8px 10px;}
+    
+    .stat-card{padding:15px;}
+    .stat-card h3{font-size:2rem;}
+  }
+  
+  @media(max-width:480px){
+    body{padding-top:180px;}
+    .header{padding:10px 12px;}
+    .header h1{font-size:1rem;}
+    .header button{padding:5px 10px;font-size:0.8rem;}
+    
+    nav{top:50px;padding:5px 8px;}
+    nav button{padding:6px 10px;font-size:0.8rem;min-width:80px;}
+    
+    .container{padding:8px;}
+    .tab-content{padding:12px;}
+    
+    table{font-size:0.8rem;}
+    th,td{padding:6px 8px;}
+    
+    button{padding:10px 16px;font-size:0.9rem;}
+    
+    .stat-card{padding:12px;}
+    .stat-card h3{font-size:1.5rem;}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header" id="mainHeader">
+    <div>
+      <h1>👑 Super Admin Panel</h1>
+      <p style="margin:5px 0 0 0;opacity:0.9;font-size:0.9rem;">Platform Administration</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button onclick="toggleDarkMode();updateSuperAdminHeader();" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:500;font-size:1.2rem;" title="Toggle Dark Mode">🌙</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <nav>
+    <button class="active" onclick="showTab('admins')">Admins</button>
+    <button onclick="showTab('subscriptions')">Subscriptions</button>
+    <button onclick="showTab('statistics')">Statistics</button>
+    <button onclick="showTab('features')">⚙️ Features</button>
+    <button onclick="showTab('logintracking')">🔐 Login Tracking</button>
+  </nav>
+
+  <div class="tab-content" id="tab-content">
+    <div id="admins-tab">
+      <h2>Admin Management</h2>
+      <div class="form-row">
+        <input id="admin_userCode" placeholder="User Code (e.g., ADMIN-001)" style="flex:1;min-width:200px;">
+        <input id="admin_userName" placeholder="Username/Email *" type="email" style="flex:1;min-width:200px;" required>
+        <input id="admin_password" placeholder="Password *" type="password" style="flex:1;min-width:200px;" required>
+      </div>
+      <div class="form-row">
+        <input id="admin_fname" placeholder="First Name *" style="flex:1;min-width:150px;" required>
+        <input id="admin_lname" placeholder="Last Name *" style="flex:1;min-width:150px;" required>
+        <input id="admin_orgName" placeholder="Organization Name *" style="flex:2;min-width:200px;" required>
+      </div>
+      <div class="form-row">
+        <input id="admin_orgLogo" placeholder="Organization Logo URL" type="url" style="flex:1;min-width:200px;">
+        <input id="admin_email" placeholder="Email *" type="email" style="flex:1;min-width:200px;" required>
+        <label style="display:flex;align-items:center;gap:8px;flex:1;min-width:150px;">
+          <input type="checkbox" id="admin_showForecast" style="width:18px;height:18px;">
+          <span>Show Forecast</span>
+        </label>
+        <button id="btnAddAdmin" onclick="createAdmin()">Create Admin</button>
+      </div>
+      <div id="admin_msg"></div>
+      <h3 style="margin-top:30px;">All Admins</h3>
+      <div id="adminsList"></div>
+    </div>
+
+    <div id="subscriptions-tab" style="display:none;">
+      <h2>Subscription Management</h2>
+      <div class="form-row">
+        <select id="sub_adminId" style="flex:1;min-width:200px;" required>
+          <option value="">Select Admin *</option>
+        </select>
+        <select id="sub_planType" style="flex:1;min-width:150px;" required>
+          <option value="">Plan Type *</option>
+          <option value="Basic">Basic</option>
+          <option value="Premium">Premium</option>
+          <option value="Enterprise">Enterprise</option>
+          <option value="Custom">Custom</option>
+        </select>
+        <input id="sub_maxSubUsers" placeholder="Max Sub Users *" type="number" min="1" style="flex:1;min-width:150px;" required>
+      </div>
+      <div class="form-row">
+        <input id="sub_startDate" type="date" style="flex:1;min-width:150px;" required>
+        <input id="sub_endDate" type="date" style="flex:1;min-width:150px;" required>
+        <button id="btnCreateSubscription" onclick="createSubscription()">Create/Update Subscription</button>
+      </div>
+      <div id="sub_msg"></div>
+      <h3 style="margin-top:30px;">All Subscriptions</h3>
+      <div id="subscriptionsList"></div>
+    </div>
+
+    <div id="statistics-tab" style="display:none;">
+      <h2>Platform Statistics</h2>
+      <div id="statisticsContent"></div>
+    </div>
+
+    <div id="features-tab" style="display:none;">
+      <h2>Feature Management</h2>
+      <div id="featuresContent"></div>
+    </div>
+
+    <div id="logintracking-tab" style="display:none;">
+      <div id="logintrackingContent"></div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+if(!requireAuthRedirect()){}
+
+// Check if user is SuperAdmin
+const userType = localStorage.getItem('userType');
+if(userType && userType.toLowerCase() !== 'superadmin'){
+  alert('Access Denied. Super Admin access required.');
+  window.location.href = 'dashboard.html';
+}
+
+const API_BASE_ADMINS = `${API_BASE}/superadmin/admins`;
+const API_BASE_SUBSCRIPTIONS = `${API_BASE}/superadmin/subscriptions`;
+const API_BASE_STATISTICS = `${API_BASE}/superadmin/statistics`;
+const API_FEATURES = `${API_BASE}/superadmin/features`;
+const API_LOGIN_TRACKING = `${API_BASE}/LoginTracking`;
+
+let editingAdminId = null;
+let editingSubscriptionId = null;
+let editingSubscriptionData = null; // Store full subscription data when editing
+
+function logout(){ logoutAndRedirect(); }
+
+function showTab(tabName){
+  // Update nav buttons
+  document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  // Show/hide tabs
+  document.getElementById('admins-tab').style.display = tabName === 'admins' ? 'block' : 'none';
+  document.getElementById('subscriptions-tab').style.display = tabName === 'subscriptions' ? 'block' : 'none';
+  document.getElementById('statistics-tab').style.display = tabName === 'statistics' ? 'block' : 'none';
+  document.getElementById('features-tab').style.display = tabName === 'features' ? 'block' : 'none';
+  document.getElementById('logintracking-tab').style.display = tabName === 'logintracking' ? 'block' : 'none';
+  
+  // Load data for selected tab
+  if(tabName === 'admins') loadAdmins();
+  else if(tabName === 'subscriptions') loadSubscriptions();
+  else if(tabName === 'statistics') loadStatistics();
+  else if(tabName === 'features') loadFeaturesTab();
+  else if(tabName === 'logintracking') loadLoginTrackingTab();
+}
+
+// ==================== ADMIN MANAGEMENT ====================
+
+async function loadAdmins(){
+  try{
+    const r = await fetchJson(API_BASE_ADMINS, {headers:authHeader()});
+    if(handleApiError(r, 'admin_msg', 'Failed to load admins')) return;
+    
+    const admins = r.data || [];
+    displayAdmins(admins);
+    populateAdminDropdown(admins);
+  } catch(err){
+    logError('loadAdmins', err);
+    showError('admin_msg', 'Error loading admins');
+  }
+}
+
+function displayAdmins(admins){
+  const container = document.getElementById('adminsList');
+  if(admins.length === 0){
+    container.innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">No admins found</p>';
+    return;
+  }
+  
+  const html = `
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>User Code</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Organization</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${admins.map(admin => `
+          <tr>
+            <td>${escapeHtml(admin.id)}</td>
+            <td>${escapeHtml(admin.userCode || 'N/A')}</td>
+            <td>${escapeHtml((admin.fname || '') + ' ' + (admin.lname || ''))}</td>
+            <td>${escapeHtml(admin.userEmail || admin.userName || 'N/A')}</td>
+            <td>${escapeHtml(admin.organizationName || 'N/A')}</td>
+            <td>
+              <span class="status-badge ${admin.isActive ? 'status-active' : 'status-suspended'}">
+                ${admin.isActive ? 'Active' : 'Suspended'}
+              </span>
+            </td>
+            <td style="display:flex;gap:5px;flex-wrap:wrap;">
+              <button onclick="editAdmin(${admin.id})" style="padding:6px 12px;background:#3498db;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">Edit</button>
+              ${admin.isActive ? 
+                `<button onclick="suspendAdmin(${admin.id})" style="padding:6px 12px;background:#f39c12;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">Suspend</button>` :
+                `<button onclick="activateAdmin(${admin.id})" style="padding:6px 12px;background:#27ae60;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">Activate</button>`
+              }
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+  container.innerHTML = html;
+}
+
+function populateAdminDropdown(admins){
+  const select = document.getElementById('sub_adminId');
+  select.innerHTML = '<option value="">Select Admin *</option>' + 
+    admins.map(a => `<option value="${a.id}">${escapeHtml(a.organizationName || a.userName)} (${escapeHtml(a.userCode || a.id)})</option>`).join('');
+}
+
+async function createAdmin(){
+  clearMessage('admin_msg');
+  
+  const userCode = document.getElementById('admin_userCode').value.trim();
+  const userName = document.getElementById('admin_userName').value.trim();
+  const password = document.getElementById('admin_password').value;
+  const fname = document.getElementById('admin_fname').value.trim();
+  const lname = document.getElementById('admin_lname').value.trim();
+  const organizationName = document.getElementById('admin_orgName').value.trim();
+  const organizationLogo = document.getElementById('admin_orgLogo').value.trim();
+  const userEmail = document.getElementById('admin_email').value.trim();
+  const showForecast = document.getElementById('admin_showForecast').checked;
+  
+  if(!userName || !password || !fname || !lname || !organizationName || !userEmail){
+    showError('admin_msg', 'Please fill all required fields');
+    return;
+  }
+  
+  const payload = {
+    userCode: userCode || null,
+    userName,
+    password,
+    fname,
+    lname,
+    organizationName,
+    organizationLogo: organizationLogo || null,
+    userEmail,
+    showForecast
+  };
+  
+  setButtonLoading('btnAddAdmin', 'Creating...');
+  showLoading('admin_msg', 'Creating admin...');
+  
+  try{
+    const r = await fetchJson(API_BASE_ADMINS, {
+      method: 'POST',
+      headers: authHeader(),
+      body: JSON.stringify(payload)
+    });
+    removeButtonLoading('btnAddAdmin');
+    
+    if(handleApiError(r, 'admin_msg', 'Failed to create admin')) return;
+    
+    showSuccess('admin_msg', 'Admin created successfully!');
+    resetAdminForm();
+    loadAdmins();
+  } catch(err){
+    removeButtonLoading('btnAddAdmin');
+    logError('createAdmin', err);
+    showError('admin_msg', 'Error creating admin');
+  }
+}
+
+function resetAdminForm(){
+  document.getElementById('admin_userCode').value = '';
+  document.getElementById('admin_userName').value = '';
+  document.getElementById('admin_password').value = '';
+  document.getElementById('admin_fname').value = '';
+  document.getElementById('admin_lname').value = '';
+  document.getElementById('admin_orgName').value = '';
+  document.getElementById('admin_orgLogo').value = '';
+  document.getElementById('admin_email').value = '';
+  document.getElementById('admin_showForecast').checked = false;
+  editingAdminId = null;
+  document.getElementById('btnAddAdmin').innerText = 'Create Admin';
+}
+
+async function editAdmin(id){
+  try{
+    const r = await fetchJson(`${API_BASE_ADMINS}/${id}`, {headers:authHeader()});
+    if(handleApiError(r, 'admin_msg', 'Failed to load admin')) return;
+    
+    const admin = r.data;
+    editingAdminId = id;
+    
+    document.getElementById('admin_userCode').value = admin.userCode || '';
+    document.getElementById('admin_userName').value = admin.userName || '';
+    document.getElementById('admin_fname').value = admin.fname || '';
+    document.getElementById('admin_lname').value = admin.lname || '';
+    document.getElementById('admin_orgName').value = admin.organizationName || '';
+    document.getElementById('admin_orgLogo').value = admin.organizationLogo || '';
+    document.getElementById('admin_email').value = admin.userEmail || '';
+    document.getElementById('admin_showForecast').checked = admin.showForecast || false;
+    
+    document.getElementById('btnAddAdmin').innerText = 'Update Admin';
+    document.getElementById('admin_password').required = false;
+    
+    showSuccess('admin_msg', 'Edit mode: Update fields and click Update Admin');
+  } catch(err){
+    logError('editAdmin', err);
+    showError('admin_msg', 'Error loading admin');
+  }
+}
+
+async function suspendAdmin(id){
+  if(!confirm('Are you sure you want to suspend this admin?')) return;
+  
+  try{
+    const r = await fetchJson(`${API_BASE_ADMINS}/${id}/suspend`, {
+      method: 'PUT',
+      headers: authHeader()
+    });
+    
+    if(handleApiError(r, 'admin_msg', 'Failed to suspend admin')) return;
+    showSuccess('admin_msg', 'Admin suspended successfully!');
+    loadAdmins();
+  } catch(err){
+    logError('suspendAdmin', err);
+    showError('admin_msg', 'Error suspending admin');
+  }
+}
+
+async function activateAdmin(id){
+  if(!confirm('Are you sure you want to activate this admin?')) return;
+  
+  try{
+    const r = await fetchJson(`${API_BASE_ADMINS}/${id}/activate`, {
+      method: 'PUT',
+      headers: authHeader()
+    });
+    
+    if(handleApiError(r, 'admin_msg', 'Failed to activate admin')) return;
+    showSuccess('admin_msg', 'Admin activated successfully!');
+    loadAdmins();
+  } catch(err){
+    logError('activateAdmin', err);
+    showError('admin_msg', 'Error activating admin');
+  }
+}
+
+// ==================== SUBSCRIPTION MANAGEMENT ====================
+
+async function loadSubscriptions(){
+  try{
+    const r = await fetchJson(API_BASE_SUBSCRIPTIONS, {headers:authHeader()});
+    if(handleApiError(r, 'sub_msg', 'Failed to load subscriptions')) return;
+    
+    const subscriptions = r.data || [];
+    displaySubscriptions(subscriptions);
+  } catch(err){
+    logError('loadSubscriptions', err);
+    showError('sub_msg', 'Error loading subscriptions');
+  }
+}
+
+function displaySubscriptions(subscriptions){
+  const container = document.getElementById('subscriptionsList');
+  if(subscriptions.length === 0){
+    container.innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">No subscriptions found</p>';
+    return;
+  }
+  
+  const html = `
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Admin</th>
+          <th>Plan Type</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Max Sub Users</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${subscriptions.map(sub => `
+          <tr>
+            <td>${escapeHtml(sub.id)}</td>
+            <td>${escapeHtml(sub.adminId || 'N/A')}</td>
+            <td>${escapeHtml(sub.planType || 'N/A')}</td>
+            <td>${sub.startDate ? formatDateOnly(sub.startDate) : 'N/A'}</td>
+            <td>${sub.endDate ? formatDateOnly(sub.endDate) : 'N/A'}</td>
+            <td>${escapeHtml(sub.maxSubUsers || 0)}</td>
+            <td>
+              <span class="status-badge ${sub.status === 'Active' ? 'status-active' : sub.status === 'Suspended' ? 'status-suspended' : 'status-expired'}">
+                ${escapeHtml(sub.status || 'N/A')}
+              </span>
+            </td>
+            <td style="display:flex;gap:5px;flex-wrap:wrap;">
+              <button onclick="editSubscription(${sub.id})" style="padding:6px 12px;background:#3498db;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">Edit</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+  container.innerHTML = html;
+}
+
+async function createSubscription(){
+  clearMessage('sub_msg');
+  
+  const adminId = parseInt(document.getElementById('sub_adminId').value);
+  const planType = document.getElementById('sub_planType').value;
+  const maxSubUsers = parseInt(document.getElementById('sub_maxSubUsers').value);
+  const startDate = document.getElementById('sub_startDate').value;
+  const endDate = document.getElementById('sub_endDate').value;
+  
+  if(!adminId || !planType || !maxSubUsers || !startDate || !endDate){
+    showError('sub_msg', 'Please fill all required fields');
+    return;
+  }
+  
+  const payload = {
+    adminId,
+    planType,
+    maxSubUsers,
+    startDate: new Date(startDate).toISOString(),
+    endDate: new Date(endDate).toISOString()
+  };
+  
+  // Check if we're editing an existing subscription
+  const isEditMode = editingSubscriptionId !== null;
+  const buttonText = isEditMode ? 'Updating...' : 'Creating...';
+  const messageText = isEditMode ? 'Updating subscription...' : 'Creating subscription...';
+  const successMessage = isEditMode ? 'Subscription updated successfully!' : 'Subscription created successfully!';
+  
+  setButtonLoading('btnCreateSubscription', buttonText);
+  showLoading('sub_msg', messageText);
+  
+  try{
+    let r;
+    if(isEditMode){
+      // Update existing subscription
+      // API expects SubscriptionId (capital S) and Status (required)
+      payload.SubscriptionId = parseInt(editingSubscriptionId);
+      // Preserve status from original subscription or use default
+      payload.Status = editingSubscriptionData?.status || editingSubscriptionData?.Status || 'Active';
+      r = await fetchJson(`${API_BASE_SUBSCRIPTIONS}/${editingSubscriptionId}`, {
+        method: 'PUT',
+        headers: authHeader(),
+        body: JSON.stringify(payload)
+      });
+    } else {
+      // Create new subscription
+      r = await fetchJson(API_BASE_SUBSCRIPTIONS, {
+        method: 'POST',
+        headers: authHeader(),
+        body: JSON.stringify(payload)
+      });
+    }
+    
+    removeButtonLoading('btnCreateSubscription');
+    
+    if(handleApiError(r, 'sub_msg', isEditMode ? 'Failed to update subscription' : 'Failed to create subscription')) return;
+    
+    showSuccess('sub_msg', successMessage);
+    resetSubscriptionForm();
+    loadSubscriptions();
+    loadAdmins(); // Refresh to update dropdown
+  } catch(err){
+    removeButtonLoading('btnCreateSubscription');
+    logError('createSubscription', err);
+    showError('sub_msg', isEditMode ? 'Error updating subscription' : 'Error creating subscription');
+  }
+}
+
+async function editSubscription(id){
+  try{
+    const r = await fetchJson(`${API_BASE_SUBSCRIPTIONS}/${id}`, {headers:authHeader()});
+    if(handleApiError(r, 'sub_msg', 'Failed to load subscription')) return;
+    
+    const subscription = r.data;
+    editingSubscriptionId = id;
+    editingSubscriptionData = subscription; // Store full subscription data for later use
+    
+    // Populate form fields
+    document.getElementById('sub_adminId').value = subscription.adminId || '';
+    document.getElementById('sub_planType').value = subscription.planType || '';
+    document.getElementById('sub_maxSubUsers').value = subscription.maxSubUsers || '';
+    
+    // Format dates for input fields (YYYY-MM-DD)
+    if(subscription.startDate){
+      const startDate = new Date(subscription.startDate);
+      document.getElementById('sub_startDate').value = startDate.toISOString().split('T')[0];
+    }
+    if(subscription.endDate){
+      const endDate = new Date(subscription.endDate);
+      document.getElementById('sub_endDate').value = endDate.toISOString().split('T')[0];
+    }
+    
+    // Update button text
+    document.getElementById('btnCreateSubscription').innerText = 'Update Subscription';
+    
+    // Scroll to form
+    document.getElementById('sub_adminId').scrollIntoView({behavior:'smooth', block:'center'});
+    showSuccess('sub_msg', 'Edit mode: Update the fields and click Update Subscription');
+  } catch(err){
+    logError('editSubscription', err);
+    showError('sub_msg', 'Error loading subscription');
+  }
+}
+
+function resetSubscriptionForm(){
+  document.getElementById('sub_adminId').value = '';
+  document.getElementById('sub_planType').value = '';
+  document.getElementById('sub_maxSubUsers').value = '';
+  document.getElementById('sub_startDate').value = '';
+  document.getElementById('sub_endDate').value = '';
+  editingSubscriptionId = null;
+  editingSubscriptionData = null; // Clear stored subscription data
+  document.getElementById('btnCreateSubscription').innerText = 'Create/Update Subscription';
+}
+
+// ==================== FEATURE MANAGEMENT ====================
+
+async function loadFeaturesTab(){
+  const container = document.getElementById('featuresContent');
+  container.innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">Loading features...</p>';
+  
+  try{
+    const r = await fetchJson(API_FEATURES, {headers:authHeader()});
+    if(handleApiError(r, 'featuresContent', 'Failed to load features')) return;
+    
+    const features = r.data || [];
+    displayFeatures(features);
+  } catch(err){
+    logError('loadFeaturesTab', err);
+    container.innerHTML = '<p style="color:#e74c3c;">Error loading features. API endpoint may not be implemented yet.</p>';
+  }
+}
+
+function displayFeatures(features){
+  const container = document.getElementById('featuresContent');
+  
+  if(features.length === 0){
+    container.innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">No features found</p>';
+    return;
+  }
+  
+  // Group features by category
+  const featuresByCategory = {};
+  features.forEach(feature => {
+    const category = feature.category || 'Other';
+    if(!featuresByCategory[category]){
+      featuresByCategory[category] = [];
+    }
+    featuresByCategory[category].push(feature);
+  });
+  
+  let html = `
+    <div style="margin-bottom:30px;">
+      <h3 style="margin-bottom:15px;">All Features</h3>
+      <p style="color:#7f8c8d;margin-bottom:20px;">Toggle features on/off globally. Changes affect all plans and users.</p>
+      ${Object.keys(featuresByCategory).map(category => `
+        <div style="margin-bottom:25px;background:#f8f9fa;padding:20px;border-radius:8px;">
+          <h4 style="margin:0 0 15px 0;color:#2c3e50;font-size:1.1rem;">${escapeHtml(category)}</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Feature Name</th>
+                <th>Feature Code</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${featuresByCategory[category].map(feature => `
+                <tr>
+                  <td><strong>${escapeHtml(feature.featureName || feature.name || 'N/A')}</strong></td>
+                  <td><code style="background:#e9ecef;padding:4px 8px;border-radius:4px;font-size:0.85rem;">${escapeHtml(feature.featureCode || feature.code || 'N/A')}</code></td>
+                  <td>
+                    <span class="status-badge ${(feature.isActive !== false && feature.isActive !== 'false') ? 'status-active' : 'status-suspended'}">
+                      ${(feature.isActive !== false && feature.isActive !== 'false') ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                      <input 
+                        type="checkbox" 
+                        ${(feature.isActive !== false && feature.isActive !== 'false') ? 'checked' : ''}
+                        onchange="toggleFeature('${escapeHtml(feature.featureCode || feature.code)}', this.checked)"
+                        style="width:20px;height:20px;cursor:pointer;"
+                      />
+                      <span>${(feature.isActive !== false && feature.isActive !== 'false') ? 'Disable' : 'Enable'}</span>
+                    </label>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `).join('')}
+    </div>
+    
+    <div style="margin-top:40px;padding-top:30px;border-top:2px solid #e0e0e0;">
+      <h3 style="margin-bottom:15px;">Plan Feature Assignment</h3>
+      <p style="color:#7f8c8d;margin-bottom:20px;">Assign features to specific subscription plans.</p>
+      <div class="form-row">
+        <select id="planFeature_planType" style="flex:1;min-width:200px;">
+          <option value="">Select Plan Type *</option>
+          <option value="Basic">Basic</option>
+          <option value="Premium">Premium</option>
+          <option value="Enterprise">Enterprise</option>
+          <option value="Custom">Custom</option>
+        </select>
+        <button onclick="loadPlanFeatures()" style="flex:0 0 auto;">Load Plan Features</button>
+      </div>
+      <div id="planFeaturesContent" style="margin-top:20px;"></div>
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+async function toggleFeature(featureCode, enabled){
+  try{
+    const r = await fetchJson(`${API_FEATURES}/${featureCode}/toggle`, {
+      method: 'PUT',
+      headers: authHeader(),
+      body: JSON.stringify({ enabled })
+    });
+    
+    if(handleApiError(r, 'featuresContent', 'Failed to toggle feature')) return;
+    
+    showSuccess('featuresContent', `Feature ${enabled ? 'enabled' : 'disabled'} successfully!`);
+    loadFeaturesTab(); // Refresh list
+  } catch(err){
+    logError('toggleFeature', err);
+    showError('featuresContent', 'Error toggling feature. API endpoint may not be implemented yet.');
+  }
+}
+
+async function loadPlanFeatures(){
+  const planType = document.getElementById('planFeature_planType').value;
+  if(!planType){
+    showError('planFeaturesContent', 'Please select a plan type');
+    return;
+  }
+  
+  const container = document.getElementById('planFeaturesContent');
+  container.innerHTML = '<p style="color:#7f8c8d;">Loading plan features...</p>';
+  
+  try{
+    // First, get all features
+    const featuresRes = await fetchJson(API_FEATURES, {headers:authHeader()});
+    if(handleApiError(featuresRes, 'planFeaturesContent', 'Failed to load features')) return;
+    
+    const allFeatures = featuresRes.data || [];
+    
+    // Try to get current plan features (if API exists)
+    // Note: GET endpoint may not be available (405), only POST is supported for assigning features
+    let currentPlanFeatures = [];
+    try{
+      const planRes = await fetchJson(`${API_BASE}/superadmin/plans/${planType}/features`, {headers:authHeader()});
+      // Handle 405 (Method Not Allowed) - GET is not supported, only POST
+      if(planRes.status === 405){
+        console.log('GET method not supported for plan features (405). This is expected - only POST is available for assigning features.');
+        // Continue with empty array - no features pre-selected
+      } else if(planRes.ok && planRes.data){
+        currentPlanFeatures = planRes.data.features || planRes.data || [];
+      }
+    } catch(err){
+      // API might not exist yet or GET method not supported (405), continue with empty array
+      console.log('Plan features GET API not available, using empty array. Features can still be assigned via POST.');
+    }
+    
+    // Create a set of assigned feature IDs/codes
+    const assignedFeatureCodes = new Set();
+    if(Array.isArray(currentPlanFeatures)){
+      currentPlanFeatures.forEach(f => {
+        if(f.featureCode) assignedFeatureCodes.add(f.featureCode);
+        if(f.code) assignedFeatureCodes.add(f.code);
+        if(f.id) assignedFeatureCodes.add(f.id.toString());
+      });
+    }
+    
+    // Create a set of assigned feature IDs (integers)
+    const assignedFeatureIds = new Set();
+    if(Array.isArray(currentPlanFeatures)){
+      currentPlanFeatures.forEach(f => {
+        // Check for feature ID (integer) in the response
+        if(f.featureId) assignedFeatureIds.add(parseInt(f.featureId));
+        if(f.id) assignedFeatureIds.add(parseInt(f.id));
+        // Also check by feature code to match existing assignments
+        if(f.featureCode || f.code){
+          const matchingFeature = allFeatures.find(af => (af.featureCode || af.code) === (f.featureCode || f.code));
+          if(matchingFeature && matchingFeature.id) assignedFeatureIds.add(parseInt(matchingFeature.id));
+        }
+      });
+    }
+    
+    const html = `
+      <div style="background:#f8f9fa;padding:20px;border-radius:8px;">
+        <h4 style="margin:0 0 15px 0;">Features for ${escapeHtml(planType)} Plan</h4>
+        <p style="color:#7f8c8d;font-size:0.9rem;margin-bottom:15px;">Select features to assign to this plan. Feature IDs (integers) will be sent to the API.</p>
+        <div style="max-height:400px;overflow-y:auto;">
+          ${allFeatures.map(feature => {
+            const featureId = parseInt(feature.id) || parseInt(feature.featureId);
+            const featureCode = feature.featureCode || feature.code || '';
+            const isAssigned = featureId && assignedFeatureIds.has(featureId);
+            return `
+              <label style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;margin-bottom:8px;border-radius:6px;cursor:pointer;border:2px solid ${isAssigned ? '#27ae60' : '#e0e0e0'};">
+                <input 
+                  type="checkbox" 
+                  ${isAssigned ? 'checked' : ''}
+                  data-feature-id="${featureId || ''}"
+                  style="width:18px;height:18px;cursor:pointer;"
+                />
+                <div style="flex:1;">
+                  <strong>${escapeHtml(feature.featureName || feature.name || 'N/A')}</strong>
+                  <div style="font-size:0.85rem;color:#7f8c8d;">
+                    ${escapeHtml(feature.category || 'Other')} | ID: ${featureId || 'N/A'}
+                  </div>
+                </div>
+                <code style="background:#e9ecef;padding:4px 8px;border-radius:4px;font-size:0.85rem;">${escapeHtml(featureCode || 'N/A')}</code>
+              </label>
+            `;
+          }).join('')}
+        </div>
+        <div style="margin-top:20px;">
+          <button onclick="assignFeaturesToPlan('${escapeHtml(planType)}')" style="padding:12px 24px;background:linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
+            💾 Save Plan Features
+          </button>
+        </div>
+      </div>
+    `;
+    
+    container.innerHTML = html;
+  } catch(err){
+    logError('loadPlanFeatures', err);
+    container.innerHTML = '<p style="color:#e74c3c;">Error loading plan features. API endpoint may not be implemented yet.</p>';
+  }
+}
+
+async function assignFeaturesToPlan(planType){
+  const checkboxes = document.querySelectorAll('#planFeaturesContent input[type="checkbox"]');
+  const selectedFeatureIds = [];
+  
+  checkboxes.forEach(cb => {
+    if(cb.checked){
+      const featureId = cb.dataset.featureId;
+      if(featureId){
+        // Convert to integer to ensure it's a number, not a string
+        const id = parseInt(featureId);
+        if(!isNaN(id)){
+          selectedFeatureIds.push(id);
+        }
+      }
+    }
+  });
+  
+  if(selectedFeatureIds.length === 0){
+    showError('planFeaturesContent', 'Please select at least one feature');
+    return;
+  }
+  
+  try{
+    const r = await fetchJson(`${API_BASE}/superadmin/plans/${planType}/features`, {
+      method: 'POST',
+      headers: authHeader(),
+      body: JSON.stringify({
+        featureIds: selectedFeatureIds, // ✅ Array of integers
+        enabled: true
+      })
+    });
+    
+    if(handleApiError(r, 'planFeaturesContent', 'Failed to assign features')) return;
+    
+    showSuccess('planFeaturesContent', `Features assigned to ${escapeHtml(planType)} plan successfully!`);
+    loadPlanFeatures(); // Refresh
+  } catch(err){
+    logError('assignFeaturesToPlan', err);
+    showError('planFeaturesContent', 'Error assigning features. API endpoint may not be implemented yet.');
+  }
+}
+
+// ==================== STATISTICS ====================
+
+async function loadStatistics(){
+  try{
+    const r = await fetchJson(API_BASE_STATISTICS, {headers:authHeader()});
+    if(handleApiError(r, 'statisticsContent', 'Failed to load statistics')) return;
+    
+    const stats = r.data || {};
+    displayStatistics(stats);
+  } catch(err){
+    logError('loadStatistics', err);
+    document.getElementById('statisticsContent').innerHTML = '<p style="color:#e74c3c;">Error loading statistics</p>';
+  }
+}
+
+function displayStatistics(stats){
+  const container = document.getElementById('statisticsContent');
+  
+  const html = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));gap:20px;margin-bottom:30px;">
+      <div class="stat-card">
+        <p>Total Admins</p>
+        <h3>${stats.totalAdmins || 0}</h3>
+      </div>
+      <div class="stat-card">
+        <p>Active Admins</p>
+        <h3>${stats.activeAdmins || 0}</h3>
+      </div>
+      <div class="stat-card">
+        <p>Total Subscriptions</p>
+        <h3>${stats.totalSubscriptions || 0}</h3>
+      </div>
+      <div class="stat-card">
+        <p>Total Sub Users</p>
+        <h3>${stats.totalSubUsers || 0}</h3>
+      </div>
+    </div>
+    <div style="background:#f8f9fa;padding:20px;border-radius:8px;">
+      <h3 style="margin-bottom:15px;">Platform Overview</h3>
+      <pre style="background:#fff;padding:15px;border-radius:6px;overflow-x:auto;">${JSON.stringify(stats, null, 2)}</pre>
+    </div>
+  `;
+  container.innerHTML = html;
+}
+
+// Helper functions
+function clearMessage(id){
+  const el = document.getElementById(id);
+  if(el) el.innerHTML = '';
+  el.className = '';
+}
+
+function showError(id, msg){
+  const el = document.getElementById(id);
+  if(el){
+    el.innerHTML = escapeHtml(msg);
+    el.className = 'error';
+  }
+}
+
+function showSuccess(id, msg){
+  const el = document.getElementById(id);
+  if(el){
+    el.innerHTML = escapeHtml(msg);
+    el.className = 'success';
+  }
+}
+
+function showLoading(id, msg){
+  const el = document.getElementById(id);
+  if(el){
+    el.innerHTML = escapeHtml(msg) + ' <span style="display:inline-block;animation:spin 1s linear infinite;">⏳</span>';
+    el.className = 'success';
+  }
+}
+
+function setButtonLoading(id, text){
+  const btn = document.getElementById(id);
+  if(btn){
+    btn.disabled = true;
+    btn.dataset.originalText = btn.innerText;
+    btn.innerText = text;
+  }
+}
+
+function removeButtonLoading(id){
+  const btn = document.getElementById(id);
+  if(btn){
+    btn.disabled = false;
+    btn.innerText = btn.dataset.originalText || 'Save';
+  }
+}
+
+// Update nav position based on header height
+function updateNavPosition(){
+  const header = document.querySelector('.header');
+  const nav = document.querySelector('nav');
+  if(header && nav){
+    const headerHeight = header.offsetHeight;
+    nav.style.top = headerHeight + 'px';
+    document.body.style.paddingTop = (headerHeight + nav.offsetHeight) + 'px';
+  }
+}
+
+// Update on load and resize
+window.addEventListener('load', () => {
+  setTimeout(updateNavPosition, 100);
+});
+window.addEventListener('resize', updateNavPosition);
+
+// Update super admin header with dark mode
+function updateSuperAdminHeader(){
+  const header = document.getElementById('mainHeader');
+  if(header){
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const darkBtn = header.querySelector('button[onclick*="toggleDarkMode"]');
+    if(darkBtn){
+      darkBtn.innerHTML = isDark ? '☀️' : '🌙';
+    }
+  }
+}
+
+// Initialize dark mode and keyboard shortcuts
+if(typeof initDarkMode === 'function') initDarkMode();
+if(typeof initKeyboardShortcuts === 'function') initKeyboardShortcuts();
+if(typeof updateNavPosition === 'function') {
+  window.addEventListener('load', () => {
+    setTimeout(updateNavPosition, 100);
+  });
+  window.addEventListener('resize', updateNavPosition);
+}
+
+// ==================== LOGIN TRACKING ====================
+let chartLoginDailyTrends = null;
+let chartLoginUserSummary = null;
+let chartLoginStatus = null;
+let loginTrackingCurrentPage = 1;
+let loginTrackingFilters = { fromDate: null, toDate: null, userType: null, userId: null };
+
+async function loadLoginTrackingTab(){
+  const container = document.getElementById('logintrackingContent');
+  if(!container) return;
+  
+  const html = `
+    <h2>🔐 Login Tracking</h2>
+    <p style="color:#7f8c8d;margin-bottom:20px;">Monitor user login activity and statistics</p>
+    
+    <!-- Statistics Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:30px;">
+      <div class="stat-card" style="border-top-color:#3498db;">
+        <p>Total Logins</p>
+        <h3 id="loginTotalLogins">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#27ae60;">
+        <p>Successful</p>
+        <h3 id="loginSuccessfulLogins">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#e74c3c;">
+        <p>Failed</p>
+        <h3 id="loginFailedLogins">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#9b59b6;">
+        <p>Unique Users</p>
+        <h3 id="loginUniqueUsers">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#f39c12;">
+        <p>Active Today</p>
+        <h3 id="loginActiveToday">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#1abc9c;">
+        <p>Active This Week</p>
+        <h3 id="loginActiveWeek">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#e67e22;">
+        <p>Active This Month</p>
+        <h3 id="loginActiveMonth">0</h3>
+      </div>
+    </div>
+    
+    <!-- Filters -->
+    <div style="background:#f8f9fa;padding:20px;border-radius:12px;margin-bottom:25px;border:2px solid #e0e0e0;">
+      <h3 style="margin-top:0;margin-bottom:15px;">🔍 Filters</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:15px;">
+        <div>
+          <label style="display:block;margin-bottom:8px;color:#7f8c8d;font-weight:500;">From Date</label>
+          <input type="date" id="loginFromDate" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:6px;" />
+        </div>
+        <div>
+          <label style="display:block;margin-bottom:8px;color:#7f8c8d;font-weight:500;">To Date</label>
+          <input type="date" id="loginToDate" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:6px;" />
+        </div>
+        <div>
+          <label style="display:block;margin-bottom:8px;color:#7f8c8d;font-weight:500;">User Type</label>
+          <select id="loginUserType" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:6px;">
+            <option value="">All Types</option>
+            <option value="SuperAdmin">Super Admin</option>
+            <option value="Admin">Admin</option>
+            <option value="SubUser">Sub User</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;margin-bottom:8px;color:#7f8c8d;font-weight:500;">Quick Filters</label>
+          <div style="display:flex;gap:8px;">
+            <button onclick="setLoginQuickFilter('today')" style="flex:1;padding:10px;background:#e3f2fd;color:#1976d2;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;">Today</button>
+            <button onclick="setLoginQuickFilter('week')" style="flex:1;padding:10px;background:#e3f2fd;color:#1976d2;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;">Week</button>
+            <button onclick="setLoginQuickFilter('month')" style="flex:1;padding:10px;background:#e3f2fd;color:#1976d2;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;">Month</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="applyLoginFilters()" style="padding:10px 20px;background:linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:500;">🔍 Apply Filters</button>
+        <button onclick="clearLoginFilters()" style="padding:10px 20px;background:#ecf0f1;color:#34495e;border:none;border-radius:8px;cursor:pointer;font-weight:500;">🗑️ Clear</button>
+      </div>
+    </div>
+    
+    <!-- Charts Section -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(400px, 1fr));gap:20px;margin-bottom:30px;">
+      <div style="background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+        <h3>Daily Login Trends</h3>
+        <p style="color:#7f8c8d;font-size:0.9rem;margin-bottom:15px;">Login activity over time</p>
+        <canvas id="chart-login-daily-trends" style="max-height:300px;"></canvas>
+      </div>
+      <div style="background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+        <h3>User Login Summary</h3>
+        <p style="color:#7f8c8d;font-size:0.9rem;margin-bottom:15px;">Top users by login count</p>
+        <canvas id="chart-login-user-summary" style="max-height:300px;"></canvas>
+      </div>
+      <div style="background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+        <h3>Login Status Distribution</h3>
+        <p style="color:#7f8c8d;font-size:0.9rem;margin-bottom:15px;">Success vs Failed logins</p>
+        <canvas id="chart-login-status" style="max-height:300px;"></canvas>
+      </div>
+    </div>
+    
+    <!-- Recent Logins -->
+    <div style="background:#f8f9fa;padding:20px;border-radius:12px;margin-bottom:25px;border:2px solid #e0e0e0;">
+      <h3 style="margin-top:0;margin-bottom:15px;">Recent Login Activity</h3>
+      <div id="recentLoginsList" style="max-height:200px;overflow-y:auto;">
+        <p style="color:#7f8c8d;text-align:center;padding:20px;">Loading recent logins...</p>
+      </div>
+    </div>
+    
+    <!-- Activity Table -->
+    <div>
+      <h3 style="margin-bottom:15px;">Login Activity Log</h3>
+      <div id="loginActivityTable" style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);color:#fff;">
+              <th style="padding:12px;text-align:left;">Date/Time</th>
+              <th>User</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>IP Address</th>
+              <th>User Agent</th>
+            </tr>
+          </thead>
+          <tbody id="loginActivityBody">
+            <tr><td colspan="6" style="text-align:center;padding:20px;color:#7f8c8d;">Loading activity...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="loginActivityPagination" style="margin-top:15px;"></div>
+    </div>
+    
+    <div id="login_msg" style="margin-top:15px;"></div>
+  `;
+  
+  container.innerHTML = html;
+  
+  // Load statistics and activity
+  await loadLoginStatistics();
+  await loadLoginActivity(1);
+}
+
+async function loadLoginStatistics(){
+  try{
+    const params = new URLSearchParams();
+    if(loginTrackingFilters.fromDate) params.append('fromDate', loginTrackingFilters.fromDate);
+    if(loginTrackingFilters.toDate) params.append('toDate', loginTrackingFilters.toDate);
+    if(loginTrackingFilters.userType) params.append('userType', loginTrackingFilters.userType);
+    if(loginTrackingFilters.userId) params.append('userId', loginTrackingFilters.userId);
+    
+    const url = `${API_LOGIN_TRACKING}/statistics${params.toString() ? '?' + params.toString() : ''}`;
+    console.log('Loading login statistics from:', url);
+    const r = await fetchJson(url, {headers: authHeader()});
+    
+    if(!r.ok){
+      console.error('Login statistics API error:', r);
+      if(r.status === 403){
+        showError('login_msg', 'You do not have permission to view login statistics');
+        return;
+      }
+      if(r.status === 404){
+        showError('login_msg', 'Login Tracking API endpoint not found. Please check if the API is running.');
+        return;
+      }
+      handleApiError(r, 'login_msg', 'Failed to load login statistics');
+      return;
+    }
+    
+    // Handle different API response formats
+    let stats = {};
+    if(r.data){
+      stats = r.data;
+    } else if(r.apiResponse && r.apiResponse.body){
+      stats = r.apiResponse.body;
+    } else if(r.body){
+      stats = r.body;
+    } else if(r.status && r.status === true && r.body){
+      stats = r.body;
+    }
+    
+    console.log('Login statistics loaded:', stats);
+    
+    // Update statistics cards
+    const updateEl = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val || 0; };
+    updateEl('loginTotalLogins', stats.totalLogins);
+    updateEl('loginSuccessfulLogins', stats.successfulLogins);
+    updateEl('loginFailedLogins', stats.failedLogins);
+    updateEl('loginUniqueUsers', stats.uniqueUsers);
+    updateEl('loginActiveToday', stats.activeUsersToday);
+    updateEl('loginActiveWeek', stats.activeUsersThisWeek);
+    updateEl('loginActiveMonth', stats.activeUsersThisMonth);
+    
+    // Update recent logins
+    const recentLogins = stats.recentLogins || [];
+    const recentLoginsList = document.getElementById('recentLoginsList');
+    if(recentLoginsList){
+      if(recentLogins.length === 0){
+        recentLoginsList.innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">No recent logins</p>';
+      } else {
+        recentLoginsList.innerHTML = recentLogins.slice(0, 10).map(login => `
+          <div style="display:flex;justify-content:space-between;padding:10px;background:#fff;border-radius:6px;margin-bottom:8px;border-left:3px solid ${login.loginStatus === 'success' ? '#27ae60' : '#e74c3c'};">
+            <div>
+              <strong>${escapeHtml(login.userName || 'N/A')}</strong>
+              <span style="color:#7f8c8d;font-size:0.85rem;margin-left:10px;">${login.userType || 'N/A'}</span>
+            </div>
+            <div>
+              <span style="padding:4px 8px;border-radius:4px;font-size:0.8rem;background:${login.loginStatus === 'success' ? '#d4edda' : '#f8d7da'};color:${login.loginStatus === 'success' ? '#155724' : '#721c24'};">
+                ${login.loginStatus === 'success' ? '✓ Success' : '✗ Failed'}
+              </span>
+              <span style="color:#7f8c8d;font-size:0.85rem;margin-left:10px;">
+                ${login.createdAt ? formatDateOnly(login.createdAt) : 'N/A'}
+              </span>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+    
+    // Update Daily Trends Chart
+    const dailyCounts = stats.dailyLoginCounts || [];
+    const ctxDailyTrends = document.getElementById('chart-login-daily-trends');
+    if(ctxDailyTrends && dailyCounts.length > 0 && typeof Chart !== 'undefined'){
+      const ctx = ctxDailyTrends.getContext('2d');
+      if(chartLoginDailyTrends) chartLoginDailyTrends.destroy();
+      chartLoginDailyTrends = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dailyCounts.slice(-30).map(d => formatDateOnly(d.date)),
+          datasets: [{
+            label: 'Login Count',
+            data: dailyCounts.slice(-30).map(d => d.loginCount || 0),
+            borderColor: '#e74c3c',
+            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 3
+          }, {
+            label: 'Unique Users',
+            data: dailyCounts.slice(-30).map(d => d.uniqueUsers || 0),
+            borderColor: '#27ae60',
+            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: true },
+            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+    
+    // Update User Summary Chart
+    const userSummary = stats.userLoginSummary || [];
+    const ctxUserSummary = document.getElementById('chart-login-user-summary');
+    if(ctxUserSummary && userSummary.length > 0 && typeof Chart !== 'undefined'){
+      const ctx = ctxUserSummary.getContext('2d');
+      if(chartLoginUserSummary) chartLoginUserSummary.destroy();
+      const topUsers = userSummary.slice(0, 10);
+      chartLoginUserSummary = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: topUsers.map(u => (u.userName || `User ${u.userId}`).substring(0, 15)),
+          datasets: [{
+            label: 'Successful',
+            data: topUsers.map(u => u.successfulLogins || 0),
+            backgroundColor: '#27ae60'
+          }, {
+            label: 'Failed',
+            data: topUsers.map(u => u.failedLogins || 0),
+            backgroundColor: '#e74c3c'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: true },
+            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+    
+    // Update Login Status Chart
+    const ctxStatus = document.getElementById('chart-login-status');
+    if(ctxStatus && typeof Chart !== 'undefined'){
+      const ctx = ctxStatus.getContext('2d');
+      if(chartLoginStatus) chartLoginStatus.destroy();
+      chartLoginStatus = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Successful', 'Failed'],
+          datasets: [{
+            data: [stats.successfulLogins || 0, stats.failedLogins || 0],
+            backgroundColor: ['#27ae60', '#e74c3c'],
+            borderWidth: 3,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
+          }
+        }
+      });
+    }
+    
+  } catch(err){
+    console.error('loadLoginStatistics error:', err);
+    logError('loadLoginStatistics', err);
+    showError('login_msg', `Failed to load login statistics: ${err.message || 'Unknown error'}`);
+  }
+}
+
+async function loadLoginActivity(page = 1){
+  try{
+    loginTrackingCurrentPage = page;
+    
+    const params = new URLSearchParams();
+    if(loginTrackingFilters.fromDate) params.append('fromDate', loginTrackingFilters.fromDate);
+    if(loginTrackingFilters.toDate) params.append('toDate', loginTrackingFilters.toDate);
+    if(loginTrackingFilters.userType) params.append('userType', loginTrackingFilters.userType);
+    if(loginTrackingFilters.userId) params.append('userId', loginTrackingFilters.userId);
+    params.append('page', page);
+    params.append('limit', 20);
+    
+    const url = `${API_LOGIN_TRACKING}/activity${params.toString() ? '?' + params.toString() : ''}`;
+    console.log('Loading login activity from:', url);
+    const r = await fetchJson(url, {headers: authHeader()});
+    
+    if(!r.ok){
+      console.error('Login activity API error:', r);
+      if(r.status === 403){
+        showError('login_msg', 'You do not have permission to view login activity');
+        return;
+      }
+      if(r.status === 404){
+        showError('login_msg', 'Login Activity API endpoint not found. Please check if the API is running.');
+        return;
+      }
+      handleApiError(r, 'login_msg', 'Failed to load login activity');
+      return;
+    }
+    
+    // Handle different API response formats
+    let activity = {};
+    if(r.data){
+      activity = r.data;
+    } else if(r.apiResponse && r.apiResponse.body){
+      activity = r.apiResponse.body;
+    } else if(r.body){
+      activity = r.body;
+    } else if(r.status && r.status === true && r.body){
+      activity = r.body;
+    }
+    
+    const items = activity.items || activity.data || [];
+    const pagination = activity.pagination || { page: 1, totalPages: 1, hasNext: false, hasPrevious: false };
+    
+    console.log('Login activity loaded:', { itemsCount: items.length, pagination });
+    
+    // Render table
+    const tbody = document.getElementById('loginActivityBody');
+    if(tbody){
+      if(items.length === 0){
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#7f8c8d;">No login activity found</td></tr>';
+      } else {
+        tbody.innerHTML = items.map(item => {
+          const statusColor = item.loginStatus === 'success' ? '#155724' : '#721c24';
+          const statusBg = item.loginStatus === 'success' ? '#d4edda' : '#f8d7da';
+          return `
+            <tr style="border-bottom:1px solid #ecf0f1;">
+              <td style="padding:12px;">
+                ${item.createdAt ? formatDate(item.createdAt) : 'N/A'}<br>
+                <small style="color:#7f8c8d;">${item.createdAt ? formatRelativeTime(item.createdAt) : ''}</small>
+              </td>
+              <td style="padding:12px;">
+                <strong>${escapeHtml(item.userName || 'N/A')}</strong><br>
+                <small style="color:#7f8c8d;">${escapeHtml(item.userCode || '')}</small>
+              </td>
+              <td style="padding:12px;">${escapeHtml(item.userType || 'N/A')}</td>
+              <td style="padding:12px;">
+                <span style="padding:4px 8px;border-radius:4px;font-size:0.85rem;background:${statusBg};color:${statusColor};">
+                  ${item.loginStatus === 'success' ? '✓ Success' : '✗ Failed'}
+                </span>
+                ${item.failureReason ? `<br><small style="color:#721c24;font-size:0.8rem;">${escapeHtml(item.failureReason)}</small>` : ''}
+              </td>
+              <td style="padding:12px;">${escapeHtml(item.ipAddress || 'N/A')}</td>
+              <td style="padding:12px;" title="${escapeHtml(item.userAgent || 'N/A')}">
+                ${(item.userAgent || 'N/A').substring(0, 50)}${(item.userAgent || '').length > 50 ? '...' : ''}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+    
+    // Render pagination
+    const paginationDiv = document.getElementById('loginActivityPagination');
+    if(paginationDiv && pagination.totalPages > 1){
+      if(typeof createPagination === 'function'){
+        createPagination('loginActivityPagination', pagination.totalPages, pagination.page, (p) => loadLoginActivity(p));
+      } else {
+        // Simple pagination
+        let pagHtml = '<div style="display:flex;gap:5px;justify-content:center;">';
+        if(pagination.hasPrevious){
+          pagHtml += `<button onclick="loadLoginActivity(${pagination.page - 1})" style="padding:8px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer;">Previous</button>`;
+        }
+        pagHtml += `<span style="padding:8px 12px;">Page ${pagination.page} of ${pagination.totalPages}</span>`;
+        if(pagination.hasNext){
+          pagHtml += `<button onclick="loadLoginActivity(${pagination.page + 1})" style="padding:8px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer;">Next</button>`;
+        }
+        pagHtml += '</div>';
+        paginationDiv.innerHTML = pagHtml;
+      }
+    } else if(paginationDiv){
+      paginationDiv.innerHTML = '';
+    }
+    
+  } catch(err){
+    console.error('loadLoginActivity error:', err);
+    logError('loadLoginActivity', err);
+    showError('login_msg', `Failed to load login activity: ${err.message || 'Unknown error'}`);
+  }
+}
+
+function applyLoginFilters(){
+  const fromDate = document.getElementById('loginFromDate')?.value;
+  const toDate = document.getElementById('loginToDate')?.value;
+  const userType = document.getElementById('loginUserType')?.value;
+  
+  loginTrackingFilters = {
+    fromDate: fromDate || null,
+    toDate: toDate || null,
+    userType: userType || null,
+    userId: null
+  };
+  
+  loadLoginStatistics();
+  loadLoginActivity(1);
+}
+
+function clearLoginFilters(){
+  const fromDateEl = document.getElementById('loginFromDate');
+  const toDateEl = document.getElementById('loginToDate');
+  const userTypeEl = document.getElementById('loginUserType');
+  if(fromDateEl) fromDateEl.value = '';
+  if(toDateEl) toDateEl.value = '';
+  if(userTypeEl) userTypeEl.value = '';
+  
+  loginTrackingFilters = { fromDate: null, toDate: null, userType: null, userId: null };
+  
+  loadLoginStatistics();
+  loadLoginActivity(1);
+}
+
+function setLoginQuickFilter(range){
+  const today = new Date();
+  let fromDate, toDate;
+  
+  switch(range){
+    case 'today':
+      fromDate = new Date(today);
+      toDate = new Date(today);
+      break;
+    case 'week':
+      fromDate = new Date(today);
+      fromDate.setDate(today.getDate() - 7);
+      toDate = new Date(today);
+      break;
+    case 'month':
+      fromDate = new Date(today);
+      fromDate.setDate(today.getDate() - 30);
+      toDate = new Date(today);
+      break;
+    default:
+      return;
+  }
+  
+  const fromDateEl = document.getElementById('loginFromDate');
+  const toDateEl = document.getElementById('loginToDate');
+  if(fromDateEl) fromDateEl.value = fromDate.toISOString().split('T')[0];
+  if(toDateEl) toDateEl.value = toDate.toISOString().split('T')[0];
+  applyLoginFilters();
+}
+
+// Load admins on page load
+loadAdmins();
+</script>
+</body>
+</html>
+

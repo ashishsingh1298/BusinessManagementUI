@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bulk Data Insert Tool</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .container {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 800px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  h1 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .subtitle {
+    color: #7f8c8d;
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    margin-bottom: 8px;
+    color: #34495e;
+    font-weight: 500;
+  }
+  input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s;
+  }
+  input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+  }
+  button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 10px;
+  }
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+  }
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .status {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    display: none;
+  }
+  .status.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    display: block;
+  }
+  .status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    display: block;
+  }
+  .status.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+    display: block;
+  }
+  .progress {
+    margin-top: 20px;
+    display: none;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 30px;
+    background: #ecf0f1;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    width: 0%;
+    transition: width 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+  }
+  .stat-card {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+  }
+  .stat-card h3 {
+    color: #667eea;
+    font-size: 2rem;
+    margin-bottom: 5px;
+  }
+  .stat-card p {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📊 Bulk Data Insert Tool</h1>
+  <p class="subtitle">Insert test data into your Business Management System</p>
+  
+  <div class="form-group">
+    <label for="apiBase">API Base URL:</label>
+    <input type="text" id="apiBase" value="http://localhost/api" placeholder="API Base URL">
+  </div>
+  
+  <div class="form-group">
+    <label for="username">Username:</label>
+    <input type="text" id="username" value="admin" placeholder="Username">
+  </div>
+  
+  <div class="form-group">
+    <label for="password">Password:</label>
+    <input type="password" id="password" value="MySecurePass-Test" placeholder="Password">
+  </div>
+  
+  <div class="form-group">
+    <label for="count">Number of Records (per type):</label>
+    <input type="number" id="count" value="10" min="1" max="100" placeholder="Number of records">
+  </div>
+  
+  <button onclick="loginAndInsert()" id="insertBtn">🚀 Login & Insert Bulk Data</button>
+  <button onclick="clearAllData()" id="clearBtn" style="background:linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">🗑️ Clear All Data (Use with caution!)</button>
+  
+  <div id="status" class="status"></div>
+  
+  <div id="progress" class="progress">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill">0%</div>
+    </div>
+    <p id="progressText" style="text-align:center;color:#7f8c8d;margin-top:10px;"></p>
+  </div>
+  
+  <div class="stats" id="stats" style="display:none;">
+    <div class="stat-card">
+      <h3 id="customersCount">0</h3>
+      <p>Customers</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="billsCount">0</h3>
+      <p>Bills</p>
+    </div>
+    <div class="stat-card">
+      <h3 id="paymentsCount">0</h3>
+      <p>Payments</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = document.getElementById('apiBase').value;
+let authToken = '';
+
+// Sample data generators
+const firstNames = ['Raj', 'Priya', 'Amit', 'Sneha', 'Vikram', 'Anjali', 'Rohit', 'Kavita', 'Suresh', 'Meera', 'Arjun', 'Divya', 'Karan', 'Pooja', 'Manish'];
+const lastNames = ['Sharma', 'Patel', 'Kumar', 'Singh', 'Gupta', 'Verma', 'Yadav', 'Shah', 'Reddy', 'Rao', 'Joshi', 'Malhotra', 'Agarwal', 'Mehta', 'Jain'];
+const cities = ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Pune', 'Kolkata', 'Ahmedabad', 'Jaipur', 'Surat'];
+const statuses = ['Pending', 'Paid', 'Partial'];
+const paymentModes = ['Cash', 'UPI', 'Cheque', 'Card'];
+
+function generateCustomerName() {
+  return `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
+}
+
+function generatePhone() {
+  return '9' + Math.floor(Math.random() * 9000000000 + 1000000000).toString();
+}
+
+function generateAddress() {
+  const street = Math.floor(Math.random() * 999) + 1;
+  const city = cities[Math.floor(Math.random() * cities.length)];
+  return `${street} Main Street, ${city}`;
+}
+
+async function login() {
+  const apiBase = document.getElementById('apiBase').value;
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  
+  try {
+    const response = await fetch(`${apiBase}/Auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    
+    const data = await response.json();
+    if (response.ok && data.token) {
+      authToken = data.token;
+      return true;
+    } else {
+      throw new Error(data.message || 'Login failed');
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
+function showStatus(message, type) {
+  const status = document.getElementById('status');
+  status.className = `status ${type}`;
+  status.textContent = message;
+  status.style.display = 'block';
+}
+
+function updateProgress(current, total, message) {
+  const progress = document.getElementById('progress');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  
+  progress.style.display = 'block';
+  const percentage = Math.round((current / total) * 100);
+  progressFill.style.width = percentage + '%';
+  progressFill.textContent = percentage + '%';
+  progressText.textContent = message;
+}
+
+async function insertCustomer(apiBase, customer) {
+  const response = await fetch(`${apiBase}/Customers`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`
+    },
+    body: JSON.stringify(customer)
+  });
+  return response.json();
+}
+
+async function insertBill(apiBase, bill) {
+  const response = await fetch(`${apiBase}/Bills`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`
+    },
+    body: JSON.stringify(bill)
+  });
+  return response.json();
+}
+
+async function insertPayment(apiBase, payment) {
+  const response = await fetch(`${apiBase}/Payments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`
+    },
+    body: JSON.stringify(payment)
+  });
+  return response.json();
+}
+
+async function loginAndInsert() {
+  const insertBtn = document.getElementById('insertBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const apiBase = document.getElementById('apiBase').value;
+  const count = parseInt(document.getElementById('count').value) || 10;
+  
+  insertBtn.disabled = true;
+  clearBtn.disabled = true;
+  
+  try {
+    showStatus('Logging in...', 'info');
+    await login();
+    showStatus('Login successful! Starting data insertion...', 'success');
+    
+    const totalSteps = count * 3; // customers + bills + payments
+    let currentStep = 0;
+    
+    // Insert Customers
+    showStatus(`Inserting ${count} customers...`, 'info');
+    const customers = [];
+    for (let i = 0; i < count; i++) {
+      const customer = {
+        name: generateCustomerName(),
+        phone: generatePhone(),
+        address: generateAddress()
+      };
+      
+      try {
+        const result = await insertCustomer(apiBase, customer);
+        if (result.id) {
+          customers.push(result);
+          currentStep++;
+          updateProgress(currentStep, totalSteps, `Inserted ${i + 1}/${count} customers`);
+        }
+      } catch (err) {
+        console.error('Error inserting customer:', err);
+      }
+      
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    showStatus(`Inserted ${customers.length} customers. Creating bills...`, 'success');
+    
+    // Insert Bills
+    const bills = [];
+    for (let i = 0; i < count; i++) {
+      const customer = customers[Math.floor(Math.random() * customers.length)];
+      const bill = {
+        customerId: customer.id,
+        billAmount: Math.floor(Math.random() * 50000 + 1000),
+        status: statuses[Math.floor(Math.random() * statuses.length)],
+        notes: `Bill for ${customer.name} - ${['Monthly service', 'Product purchase', 'Consultation', 'Maintenance', 'Installation'][Math.floor(Math.random() * 5)]}`
+      };
+      
+      try {
+        const result = await insertBill(apiBase, bill);
+        if (result.id) {
+          bills.push(result);
+          currentStep++;
+          updateProgress(currentStep, totalSteps, `Inserted ${i + 1}/${count} bills`);
+        }
+      } catch (err) {
+        console.error('Error inserting bill:', err);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    showStatus(`Inserted ${bills.length} bills. Creating payments...`, 'success');
+    
+    // Insert Payments
+    let paymentsCreated = 0;
+    for (let i = 0; i < count; i++) {
+      const bill = bills[Math.floor(Math.random() * bills.length)];
+      const customer = customers.find(c => c.id === bill.customerId);
+      
+      if (customer) {
+        const payment = {
+          customerId: customer.id,
+          billId: bill.id,
+          amount: Math.floor(bill.billAmount * (Math.random() * 0.8 + 0.2)), // 20-100% of bill
+          mode: paymentModes[Math.floor(Math.random() * paymentModes.length)],
+          cleared: Math.random() > 0.3 // 70% cleared
+        };
+        
+        try {
+          const result = await insertPayment(apiBase, payment);
+          if (result.id) {
+            paymentsCreated++;
+            currentStep++;
+            updateProgress(currentStep, totalSteps, `Inserted ${paymentsCreated}/${count} payments`);
+          }
+        } catch (err) {
+          console.error('Error inserting payment:', err);
+        }
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Update stats
+    document.getElementById('customersCount').textContent = customers.length;
+    document.getElementById('billsCount').textContent = bills.length;
+    document.getElementById('paymentsCount').textContent = paymentsCreated;
+    document.getElementById('stats').style.display = 'grid';
+    
+    showStatus(`✅ Successfully inserted ${customers.length} customers, ${bills.length} bills, and ${paymentsCreated} payments!`, 'success');
+    
+  } catch (error) {
+    showStatus(`❌ Error: ${error.message}`, 'error');
+    console.error('Error:', error);
+  } finally {
+    insertBtn.disabled = false;
+    clearBtn.disabled = false;
+  }
+}
+
+async function clearAllData() {
+  if (!confirm('⚠️ WARNING: This will delete ALL customers, bills, and payments. Are you sure?')) {
+    return;
+  }
+  
+  if (!confirm('⚠️ This action cannot be undone. Are you absolutely sure?')) {
+    return;
+  }
+  
+  const clearBtn = document.getElementById('clearBtn');
+  clearBtn.disabled = true;
+  
+  try {
+    const apiBase = document.getElementById('apiBase').value;
+    if (!authToken) {
+      await login();
+    }
+    
+    showStatus('Fetching all data...', 'info');
+    
+    // Get all records
+    const [customersRes, billsRes, paymentsRes] = await Promise.all([
+      fetch(`${apiBase}/Customers`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      }),
+      fetch(`${apiBase}/Bills`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      }),
+      fetch(`${apiBase}/Payments`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      })
+    ]);
+    
+    const customers = await customersRes.json();
+    const bills = await billsRes.json();
+    const payments = await paymentsRes.json();
+    
+    showStatus('Deleting all records...', 'info');
+    
+    // Delete payments first (due to foreign keys)
+    for (const payment of payments.data || payments || []) {
+      try {
+        await fetch(`${apiBase}/Payments/${payment.id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+      } catch (err) {
+        console.error('Error deleting payment:', err);
+      }
+    }
+    
+    // Delete bills
+    for (const bill of bills.data || bills || []) {
+      try {
+        await fetch(`${apiBase}/Bills/${bill.id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+      } catch (err) {
+        console.error('Error deleting bill:', err);
+      }
+    }
+    
+    // Delete customers
+    for (const customer of customers.data || customers || []) {
+      try {
+        await fetch(`${apiBase}/Customers/${customer.id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+      } catch (err) {
+        console.error('Error deleting customer:', err);
+      }
+    }
+    
+    showStatus('✅ All data cleared successfully!', 'success');
+    document.getElementById('stats').style.display = 'grid';
+    document.getElementById('customersCount').textContent = '0';
+    document.getElementById('billsCount').textContent = '0';
+    document.getElementById('paymentsCount').textContent = '0';
+    
+  } catch (error) {
+    showStatus(`❌ Error: ${error.message}`, 'error');
+    console.error('Error:', error);
+  } finally {
+    clearBtn.disabled = false;
+  }
+}
+
+// Update API base when changed
+document.getElementById('apiBase').addEventListener('change', function() {
+  // Update if needed
+});
+</script>
+</body>
+</html>
+

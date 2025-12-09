@@ -1,0 +1,13 @@
+{
+  "name": "business-management-db-query",
+  "version": "1.0.0",
+  "description": "Database query tool for Business Management System",
+  "main": "query_database.js",
+  "scripts": {
+    "query": "node query_database.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  }
+}
+

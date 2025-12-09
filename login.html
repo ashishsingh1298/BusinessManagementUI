@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business API — Login</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  body {
+    background: #f4f7f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .login-container {
+    background: #fff;
+    padding: 40px 30px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .login-container h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 24px;
+  }
+
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #555;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    transition: all 0.2s ease-in-out;
+  }
+
+  input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+    outline: none;
+  }
+
+  .btn-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px;
+    transition: background 0.2s ease-in-out;
+  }
+
+  #btnLogin {
+    background: #007bff;
+    color: #fff;
+  }
+
+  #btnLogin:hover {
+    background: #0056b3;
+  }
+
+  #btnClear {
+    background: #6c757d;
+    color: #fff;
+  }
+
+  #btnClear:hover {
+    background: #5a6268;
+  }
+
+  .error {
+    color: #d9534f;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+
+  .info {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #666;
+    text-align: center;
+  }
+
+  @media(max-width: 768px){
+    body {
+      padding: 20px;
+      align-items: flex-start;
+      padding-top: 40px;
+    }
+    .login-container {
+      padding: 30px 20px;
+      max-width: 100%;
+    }
+    .login-container h1 {
+      font-size: 20px;
+    }
+    .btn-group {
+      flex-direction: column;
+      gap: 10px;
+    }
+    button {
+      width: 100%;
+    }
+  }
+  
+  @media(max-width: 480px){
+    body {
+      padding: 10px;
+      padding-top: 20px;
+    }
+    .login-container {
+      padding: 25px 15px;
+    }
+    .login-container h1 {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    input {
+      font-size: 16px; /* Prevents zoom on iOS */
+      padding: 10px 12px;
+    }
+    label {
+      font-size: 14px;
+    }
+    .info {
+      font-size: 12px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="login-container">
+  <h1>Business API — Login</h1>
+
+  <label for="username">Username</label>
+  <input id="username" placeholder="Enter your username" />
+
+  <label for="password">Password</label>
+  <input id="password" type="password" placeholder="Enter your password" />
+
+  <div class="btn-group">
+    <button id="btnLogin">Login</button>
+    <button id="btnClear">Clear</button>
+  </div>
+
+  <div id="msg" class="error"></div>
+
+  <p class="info">If you don't have a user, create one via your API (Swagger) or ask for a curl example.</p>
+</div>
+
+<script src="app.js"></script>
+<script>
+const API = `${API_BASE}/auth/Login`;
+
+document.getElementById("btnLogin").addEventListener("click", doLogin);
+document.getElementById("btnClear").addEventListener("click", () => {
+  document.getElementById("username").value = "";
+  document.getElementById("password").value = "";
+  clearMessage("msg");
+});
+
+async function doLogin(){
+  const u = document.getElementById("username").value.trim();
+  const p = document.getElementById("password").value.trim();
+  
+  // Basic validation
+  if(!u || !p){ 
+    showError("msg", "Enter username & password"); 
+    return; 
+  }
+  
+  if(u.length < 3 || u.length > 50){
+    showError("msg", "Username must be between 3 and 50 characters");
+    return;
+  }
+  
+  if(p.length < 3 || p.length > 100){
+    showError("msg", "Password must be between 3 and 100 characters");
+    return;
+  }
+
+  const payload = { username: u, password: p };
+  setButtonLoading("btnLogin", "Logging in...");
+  showLoading("msg", "Logging in...");
+
+  try{
+    const r = await fetchJson(API, { method:"POST", headers: authHeader(), body: JSON.stringify(payload) });
+    removeButtonLoading("btnLogin");
+    if(handleApiError(r, "msg", "Login failed")) return;
+
+    const body = r.data; // This is now the body from {status, message, body, errors}
+    
+    // New API format: body contains {userCode, token, userName, fname, lname, userType, ...}
+    const token = body?.token;
+    if(!token){
+      showError("msg", "Login succeeded but token not found in response.");
+      logError("doLogin", { message: "Token not found", body });
+      return;
+    }
+
+    // Store only essential data in localStorage
+    // Token is required for API authentication
+    localStorage.setItem("token", token);
+    
+    // User type is required for routing and permissions
+    if (body.userType) localStorage.setItem("userType", body.userType);
+    
+    // Organization name is used in header display
+    if (body.organizationName) localStorage.setItem("organizationName", body.organizationName);
+    
+    // Feature Management System - Required for feature-based access control
+    if (body.availableFeatures && Array.isArray(body.availableFeatures)) {
+      localStorage.setItem("availableFeatures", JSON.stringify(body.availableFeatures));
+    } else {
+      // Default features for backward compatibility
+      localStorage.setItem("availableFeatures", JSON.stringify([
+        "DASHBOARD_BASIC",
+        "CUSTOMER_MANAGEMENT",
+        "BILL_MANAGEMENT",
+        "PAYMENT_MANAGEMENT"
+      ]));
+    }
+    
+    // Business information for dashboard display
+    if (body.businessInformation) {
+      localStorage.setItem("businessInformation", body.businessInformation);
+    }
+    
+    // Optional: Store other user info only if needed for offline access
+    // These can be removed if you prefer to fetch from API each time
+    // if (body.userCode) localStorage.setItem("userCode", body.userCode);
+    // if (body.userName) localStorage.setItem("userName", body.userName);
+    // if (body.fname) localStorage.setItem("fname", body.fname);
+    // if (body.lname) localStorage.setItem("lname", body.lname);
+    // if (body.userEmail) localStorage.setItem("userEmail", body.userEmail);
+    
+    // Store user info for backward compatibility
+    storeUserInfo({
+      role: body.userType,
+      username: body.userName,
+      userCode: body.userCode
+    });
+    
+    // Redirect based on user type
+    const userType = body.userType;
+    if(userType && userType.toLowerCase() === 'superadmin'){
+      window.location.href = "superadmin.html";
+    } else if(userType && userType.toLowerCase() === 'admin'){
+      window.location.href = "dashboard.html";
+    } else {
+      window.location.href = "dashboard.html";
+    }
+  } catch(e){
+    removeButtonLoading("btnLogin");
+    showError("msg", "Network error. Please check your connection and try again.");
+    logError("doLogin", e);
+  }
+}
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payments</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+  body{background:#f5f7fa;color:#2c3e50;line-height:1.6;padding-top:80px;}
+  .container{max-width:1400px;margin:0 auto;padding:20px;}
+  .header{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;box-shadow:0 4px 15px rgba(0,0,0,0.2);}
+  .header h1{font-size:1.5rem;font-weight:600;margin:0;}
+  .header button{background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:500;font-size:0.9rem;}
+  .header button:hover{background:rgba(255,255,255,0.3);}
+  table{width:100%;border-collapse:collapse;margin-top:15px;display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table thead, table tbody, table tr{display:table;width:100%;table-layout:fixed;}
+  @media(max-width:768px){
+    body{padding-top:70px;}
+    .container{padding:10px;}
+    .header{padding:12px 15px;}
+    .header h1{font-size:1.2rem;}
+    .form-row{flex-direction:column;}
+    input,select,button{width:100%;font-size:16px;}
+    table{font-size:0.85rem;}
+  }
+  @media(max-width:480px){
+    body{padding-top:60px;}
+    .header h1{font-size:1rem;}
+    .header button{padding:6px 12px;font-size:0.85rem;}
+    table{font-size:0.8rem;}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Payments</h1>
+    <div style="display:flex;gap:10px;">
+      <button onclick="window.location.href='dashboard.html'">Dashboard</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div>
+    <h3>Record Payment</h3>
+    <div class="form-row">
+      <select id="pay_customer"></select>
+      <select id="pay_bill"></select>
+      <input id="pay_amount" placeholder="Amount" type="number" />
+      <select id="pay_mode">
+        <option value="Cash">Cash</option>
+        <option value="UPI">UPI</option>
+        <option value="Cheque">Cheque</option>
+      </select>
+      <input id="pay_cheque" placeholder="Cheque No" />
+      <button id="btnAddPayment">Save</button>
+    </div>
+    <div id="pay_msg" class="error"></div>
+
+    <h3 style="margin-top:18px">All Payments</h3>
+    <table id="tblPayments">
+      <thead>
+        <tr><th>Id</th><th>Customer</th><th>Bill</th><th>Amount</th><th>Mode</th><th>Cleared</th><th>Action</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+if(!requireAuthRedirect()) {}
+
+const API_CUSTOMERS = `${API_BASE}/customers`;
+const API_BILLS = `${API_BASE}/bills`;
+const API_PAYMENTS = `${API_BASE}/payments`;
+
+async function loadCustomersIntoSelect(){
+  const r = await fetchJson(API_CUSTOMERS, { method:"GET", headers: authHeader() });
+  const sel = document.getElementById("pay_customer");
+  sel.innerHTML = "<option value=''>Select customer</option>";
+  (r.data||[]).forEach(c=>{
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.text = `${c.id} - ${escapeHtml(c.name)}`;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadBillsIntoSelect(customerId){
+  const r = await fetchJson(API_BILLS, { method:"GET", headers: authHeader() });
+  const sel = document.getElementById("pay_bill");
+  sel.innerHTML = "<option value=''>Select bill</option>";
+  const filtered = (r.data||[]).filter(b => b.customerId === customerId);
+  filtered.forEach(b=>{
+    const opt = document.createElement("option");
+    opt.value = b.id;
+    opt.text = `Bill #${b.id} - ${escapeHtml(b.billAmount)} (${escapeHtml(b.status)})`;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadPayments(){
+  const r = await fetchJson(API_PAYMENTS, { method:"GET", headers: authHeader() });
+  const tbody = document.querySelector("#tblPayments tbody");
+  tbody.innerHTML = "";
+  (r.data||[]).forEach(p=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHtml(p.id)}</td>
+      <td>${escapeHtml(p.customerId)}</td>
+      <td>${escapeHtml(p.billId)}</td>
+      <td>${escapeHtml(p.amount)}</td>
+      <td>${escapeHtml(p.mode)}</td>
+      <td>${p.cleared ? 'Yes' : 'No'}</td>
+      <td>
+        <button class="toggle-clear" data-id="${escapeHtml(p.id)}" data-newstate="${!p.cleared}">
+          Mark ${p.cleared ? 'Uncleared' : 'Cleared'}
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Add event listeners for toggle buttons
+  document.querySelectorAll(".toggle-clear").forEach(btn=>{
+      btn.addEventListener("click", async()=>{
+      const paymentId = parseInt(btn.dataset.id);
+      const newState = btn.dataset.newstate === "true";
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-spinner"></span>Updating...';
+      const r = await fetch(`${API_PAYMENTS}/update-status`, {
+        method: "PUT",
+        headers: {...authHeader(), "Content-Type": "application/json"},
+        body: JSON.stringify({paymentId, cleared: newState})
+      });
+      const rJson = await r.json().catch(() => ({ ok: r.ok, status: r.status, data: null }));
+      btn.disabled = false;
+      btn.innerText = `Mark ${newState ? 'Uncleared' : 'Cleared'}`;
+      if(handleApiError({ok: r.ok, status: r.status, data: rJson}, "pay_msg", "Failed to update payment status")) return;
+      showSuccess("pay_msg", "Payment status updated successfully!");
+      loadPayments();
+    });
+  });
+}
+
+document.getElementById("pay_customer").addEventListener("change", (e)=>{
+  const customerId = parseInt(e.target.value);
+  if(customerId) loadBillsIntoSelect(customerId);
+});
+
+document.getElementById("btnAddPayment").addEventListener("click", async()=>{
+  clearMessage("pay_msg");
+  const customerId = parseInt(document.getElementById("pay_customer").value||"0");
+  const billId = parseInt(document.getElementById("pay_bill").value||"0");
+  const amount = parseFloat(document.getElementById("pay_amount").value||"0");
+  const mode = document.getElementById("pay_mode").value;
+  const cheque = document.getElementById("pay_cheque").value.trim();
+  
+  // Validate form data
+  const validation = validatePaymentForm({customerId, billId, amount, mode});
+  if(!validation.valid){
+    const errorMsg = validation.errors.map(e => e.message).join(', ');
+    showError("pay_msg", errorMsg);
+    return;
+  }
+  
+  showLoading("pay_msg", "Saving payment...");
+  const payload = { customerId, billId, amount, mode, chequeNumber: cheque, cleared: false };
+  const r = await fetchJson(API_PAYMENTS, { method:"POST", headers: authHeader(), body: JSON.stringify(payload) });
+  
+  if(handleApiError(r, "pay_msg", "Failed to save payment")) return;
+  
+  showSuccess("pay_msg", "Payment saved successfully!");
+  document.getElementById("pay_amount").value = "";
+  document.getElementById("pay_cheque").value = "";
+  await loadPayments();
+});
+
+function logout(){ logoutAndRedirect(); }
+
+loadCustomersIntoSelect();
+loadPayments();
+</script>
+</body>
+</html>
+

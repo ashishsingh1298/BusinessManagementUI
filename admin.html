@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+  body{background:#f5f7fa;color:#2c3e50;line-height:1.6;padding-top:120px;} /* Will be updated by JS */
+  .container{max-width:1400px;margin:0 auto;padding:20px;}
+  
+  /* Fixed Header */
+  .header{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);color:#fff;box-shadow:0 4px 15px rgba(0,0,0,0.2);min-height:70px;}
+  .header h1{font-size:1.5rem;font-weight:600;letter-spacing:0.5px;margin:0;}
+  .header p{font-size:0.85rem;margin:5px 0 0 0;opacity:0.9;}
+  .header button{background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:500;transition:all 0.3s;font-size:0.9rem;white-space:nowrap;}
+  .header button:hover{background:rgba(255,255,255,0.3);}
+  .header > div{display:flex;flex-direction:column;}
+  .header > div:last-child{display:flex;gap:8px;flex-direction:row;align-items:center;flex-wrap:wrap;}
+  
+  /* Fixed Navigation */
+  nav{position:fixed;top:70px;left:0;right:0;z-index:999;display:flex;gap:8px;background:#fff;padding:8px 20px;box-shadow:0 2px 10px rgba(0,0,0,0.1);overflow-x:auto;-webkit-overflow-scrolling:touch;min-height:50px;align-items:center;transition:top 0.3s ease;}
+  nav::-webkit-scrollbar{height:4px;}
+  nav::-webkit-scrollbar-track{background:#f1f1f1;}
+  nav::-webkit-scrollbar-thumb{background:#888;border-radius:2px;}
+  nav button{flex:1;min-width:120px;padding:10px 16px;background:#ecf0f1;color:#34495e;border:none;border-radius:8px;cursor:pointer;transition:all 0.3s;font-weight:500;font-size:0.9rem;white-space:nowrap;}
+  nav button:hover{background:#d5dbdb;transform:translateY(-2px);}
+  nav button.active{background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);color:#fff;box-shadow:0 4px 12px rgba(52,152,219,0.4);}
+  
+  /* Tab Content */
+  .tab-content{background:#fff;padding:30px;border-radius:12px;min-height:400px;box-shadow:0 4px 15px rgba(0,0,0,0.08);}
+  .tab-content h2{font-size:1.5rem;color:#2c3e50;margin-bottom:20px;font-weight:600;}
+  
+  /* Forms */
+  .form-row{display:flex;gap:12px;margin-bottom:15px;flex-wrap:wrap;}
+  input, select, textarea{padding:12px 15px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;transition:all 0.3s;background:#fff;}
+  input:focus, select:focus, textarea:focus{outline:none;border-color:#3498db;box-shadow:0 0 0 3px rgba(52,152,219,0.1);}
+  button{padding:12px 24px;border:none;background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);color:#fff;border-radius:8px;cursor:pointer;font-weight:500;transition:all 0.3s;box-shadow:0 4px 12px rgba(52,152,219,0.3);}
+  button:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(52,152,219,0.4);}
+  
+  /* Tables */
+  table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+  th,td{padding:12px 15px;text-align:left;border-bottom:1px solid #ecf0f1;font-size:0.95rem;}
+  th{background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);color:#fff;font-weight:600;text-transform:uppercase;font-size:0.85rem;letter-spacing:0.5px;}
+  tr:hover{background:#f8f9fa;}
+  tr:last-child td{border-bottom:none;}
+  
+  /* Status Badges */
+  .status-badge{padding:4px 12px;border-radius:12px;font-size:0.85rem;font-weight:500;display:inline-block;}
+  .status-active{background:#d4edda;color:#155724;}
+  .status-suspended{background:#fff3cd;color:#856404;}
+  
+  /* Subscription Card */
+  .subscription-card{background:#f8f9fa;padding:25px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);margin-bottom:20px;}
+  .subscription-card h3{margin-top:0;color:#2c3e50;}
+  .subscription-info{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-top:15px;}
+  .info-item{background:#fff;padding:15px;border-radius:8px;}
+  .info-item label{display:block;color:#7f8c8d;font-size:0.85rem;margin-bottom:5px;}
+  .info-item value{display:block;color:#2c3e50;font-size:1.1rem;font-weight:600;}
+  
+  .error{color:#e74c3c;padding:10px;background:#f8d7da;border-radius:6px;margin:10px 0;}
+  .success{color:#155724;padding:10px;background:#d4edda;border-radius:6px;margin:10px 0;}
+  
+  /* Dark Mode CSS Variables */
+  :root {
+    --bg-primary: #f5f7fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f8f9fa;
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --text-tertiary: #34495e;
+    --border-color: #e0e0e0;
+    --shadow: rgba(0,0,0,0.08);
+  }
+  
+  [data-theme="dark"] {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #252525;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-tertiary: #d0d0d0;
+    --border-color: #404040;
+    --shadow: rgba(0,0,0,0.3);
+  }
+  
+  [data-theme="dark"] body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+  
+  [data-theme="dark"] .tab-content,
+  [data-theme="dark"] .subscription-card,
+  [data-theme="dark"] table {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+  
+  [data-theme="dark"] nav {
+    background: var(--bg-secondary);
+  }
+  
+  [data-theme="dark"] nav button {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+  
+  [data-theme="dark"] input,
+  [data-theme="dark"] select,
+  [data-theme="dark"] textarea {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+  }
+  
+  [data-theme="dark"] .info-item {
+    background: var(--bg-secondary);
+  }
+  
+  [data-theme="dark"] tr:hover {
+    background: var(--bg-tertiary);
+  }
+  
+  /* Toast Notifications */
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    min-width: 300px;
+    max-width: 500px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  
+  .toast.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  
+  .toast-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .toast-icon {
+    font-size: 1.2rem;
+    font-weight: bold;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  
+  .toast-success .toast-icon {
+    background: #d4edda;
+    color: #155724;
+  }
+  
+  .toast-error .toast-icon {
+    background: #f8d7da;
+    color: #721c24;
+  }
+  
+  .toast-message {
+    flex: 1;
+    font-size: 0.95rem;
+  }
+  
+  .toast-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+  }
+  
+  /* Tables - Mobile Responsive */
+  table{width:100%;border-collapse:collapse;margin-top:15px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table thead, table tbody, table tr{display:table;width:100%;table-layout:fixed;}
+  table thead{position:sticky;top:0;z-index:10;}
+  
+  /* Responsive Design */
+  @media(max-width:768px){
+    body{padding-top:160px;}
+    .container{padding:10px;}
+    .header{padding:12px 15px;}
+    .header h1{font-size:1.2rem;}
+    .header p{font-size:0.75rem;}
+    .header button{padding:6px 12px;font-size:0.85rem;}
+    .header > div:last-child{flex-direction:column;gap:5px;}
+    
+    nav{top:60px;padding:6px 10px;gap:6px;}
+    nav button{padding:8px 12px;font-size:0.85rem;min-width:100px;}
+    
+    .tab-content{padding:15px;}
+    .tab-content h2{font-size:1.3rem;}
+    
+    .form-row{flex-direction:column;gap:10px;}
+    input, select, textarea{width:100%;font-size:16px;}
+    
+    table{font-size:0.85rem;}
+    th,td{padding:8px 10px;}
+    
+    .subscription-info{grid-template-columns:1fr;}
+    .info-item{padding:12px;}
+  }
+  
+  @media(max-width:480px){
+    body{padding-top:180px;}
+    .header{padding:10px 12px;}
+    .header h1{font-size:1rem;}
+    .header button{padding:5px 10px;font-size:0.8rem;}
+    
+    nav{top:50px;padding:5px 8px;}
+    nav button{padding:6px 10px;font-size:0.8rem;min-width:80px;}
+    
+    .container{padding:8px;}
+    .tab-content{padding:12px;}
+    
+    table{font-size:0.8rem;}
+    th,td{padding:6px 8px;}
+    
+    button{padding:10px 16px;font-size:0.9rem;}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header" id="mainHeader">
+    <div>
+      <h1>⚙️ Admin Panel</h1>
+      <p style="margin:5px 0 0 0;opacity:0.9;font-size:0.9rem;">Manage Sub Users & Subscription</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button onclick="toggleDarkMode();updateAdminHeader();" style="background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:500;font-size:1.2rem;" title="Toggle Dark Mode">🌙</button>
+      <button onclick="window.location.href='dashboard.html'">Business Dashboard</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <nav>
+    <button class="active" onclick="showTab('subusers')">Sub Users</button>
+    <button onclick="showTab('subscription')">My Subscription</button>
+    <button onclick="showTab('logintracking')">🔐 Login Tracking</button>
+  </nav>
+
+  <div class="tab-content" id="tab-content">
+    <div id="subusers-tab">
+      <h2>Sub User Management</h2>
+      <div class="form-row">
+        <input id="subuser_userName" placeholder="Username/Email *" type="email" style="flex:1;min-width:200px;" required>
+        <input id="subuser_password" placeholder="Password *" type="password" style="flex:1;min-width:200px;" required>
+      </div>
+      <div class="form-row">
+        <input id="subuser_fname" placeholder="First Name *" style="flex:1;min-width:150px;" required>
+        <input id="subuser_lname" placeholder="Last Name *" style="flex:1;min-width:150px;" required>
+        <input id="subuser_email" placeholder="Email *" type="email" style="flex:1;min-width:200px;" required>
+      </div>
+      <div class="form-row">
+        <label style="display:flex;align-items:center;gap:8px;flex:1;min-width:150px;">
+          <input type="checkbox" id="subuser_showForecast" style="width:18px;height:18px;">
+          <span>Show Forecast</span>
+        </label>
+        <button id="btnAddSubUser" onclick="createSubUser()">Create Sub User</button>
+      </div>
+      <div id="subuser_msg"></div>
+      <h3 style="margin-top:30px;">All Sub Users</h3>
+      <div id="subusersList"></div>
+    </div>
+
+    <div id="subscription-tab" style="display:none;">
+      <h2>My Subscription</h2>
+      <div id="subscriptionContent"></div>
+    </div>
+
+    <div id="logintracking-tab" style="display:none;">
+      <div id="logintrackingContent"></div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+if(!requireAuthRedirect()){}
+
+// Check if user is Admin
+const userType = localStorage.getItem('userType');
+if(userType && userType.toLowerCase() !== 'admin' && userType.toLowerCase() !== 'superadmin'){
+  alert('Access Denied. Admin access required.');
+  window.location.href = 'dashboard.html';
+}
+
+const API_BASE_SUBUSERS = `${API_BASE}/admin/subusers`;
+const API_BASE_SUBSCRIPTION = `${API_BASE}/admin/subscription`;
+const API_LOGIN_TRACKING = `${API_BASE}/LoginTracking`;
+const API_SUBUSER_FEATURES = `${API_BASE}/admin/subusers`;
+
+let editingSubUserId = null;
+
+function logout(){ logoutAndRedirect(); }
+
+function showTab(tabName){
+  // Update nav buttons
+  document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  // Show/hide tabs
+  document.getElementById('subusers-tab').style.display = tabName === 'subusers' ? 'block' : 'none';
+  document.getElementById('subscription-tab').style.display = tabName === 'subscription' ? 'block' : 'none';
+  document.getElementById('logintracking-tab').style.display = tabName === 'logintracking' ? 'block' : 'none';
+  
+  // Load data for selected tab
+  if(tabName === 'subusers') loadSubUsers();
+  else if(tabName === 'subscription') loadOwnSubscription();
+  else if(tabName === 'logintracking') loadLoginTrackingTab();
+}
+
+// ==================== SUB USER MANAGEMENT ====================
+
+async function loadSubUsers(){
+  try{
+    const r = await fetchJson(API_BASE_SUBUSERS, {headers:authHeader()});
+    if(handleApiError(r, 'subuser_msg', 'Failed to load sub users')) return;
+    
+    const subUsers = r.data || [];
+    displaySubUsers(subUsers);
+  } catch(err){
+    logError('loadSubUsers', err);
+    showError('subuser_msg', 'Error loading sub users');
+  }
+}
+
+function displaySubUsers(subUsers){
+  const container = document.getElementById('subusersList');
+  if(subUsers.length === 0){
+    container.innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">No sub users found</p>';
+    return;
+  }
+  
+  const html = `
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>User Code</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${subUsers.map(user => `
+          <tr>
+            <td>${escapeHtml(user.id)}</td>
+            <td>${escapeHtml(user.userCode || 'N/A')}</td>
+            <td>${escapeHtml((user.fname || '') + ' ' + (user.lname || ''))}</td>
+            <td>${escapeHtml(user.userEmail || user.userName || 'N/A')}</td>
+            <td>
+              <span class="status-badge ${user.isActive ? 'status-active' : 'status-suspended'}">
+                ${user.isActive ? 'Active' : 'Suspended'}
+              </span>
+            </td>
+            <td style="display:flex;gap:5px;flex-wrap:wrap;">
+              <button onclick="editSubUser(${user.id})" style="padding:6px 12px;background:#3498db;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">Edit</button>
+              <button onclick="manageSubUserFeatures(${user.id}, '${escapeHtml((user.fname || '') + ' ' + (user.lname || ''))}')" style="padding:6px 12px;background:#9b59b6;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;" title="Manage Features">⚙️ Features</button>
+              ${user.isActive ? 
+                `<button onclick="suspendSubUser(${user.id})" style="padding:6px 12px;background:#f39c12;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">Suspend</button>` :
+                `<button onclick="activateSubUser(${user.id})" style="padding:6px 12px;background:#27ae60;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;">Activate</button>`
+              }
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+  container.innerHTML = html;
+}
+
+async function createSubUser(){
+  clearMessage('subuser_msg');
+  
+  const userName = document.getElementById('subuser_userName').value.trim();
+  const password = document.getElementById('subuser_password').value;
+  const fname = document.getElementById('subuser_fname').value.trim();
+  const lname = document.getElementById('subuser_lname').value.trim();
+  const userEmail = document.getElementById('subuser_email').value.trim();
+  const showForecast = document.getElementById('subuser_showForecast').checked;
+  
+  if(!userName || !password || !fname || !lname || !userEmail){
+    showError('subuser_msg', 'Please fill all required fields');
+    return;
+  }
+  
+  const payload = {
+    userName,
+    password,
+    fname,
+    lname,
+    userEmail,
+    showForecast
+  };
+  
+  setButtonLoading('btnAddSubUser', 'Creating...');
+  showLoading('subuser_msg', 'Creating sub user...');
+  
+  try{
+    const r = await fetchJson(API_BASE_SUBUSERS, {
+      method: 'POST',
+      headers: authHeader(),
+      body: JSON.stringify(payload)
+    });
+    removeButtonLoading('btnAddSubUser');
+    
+    if(handleApiError(r, 'subuser_msg', 'Failed to create sub user')) return;
+    
+    showSuccess('subuser_msg', 'Sub user created successfully!');
+    resetSubUserForm();
+    loadSubUsers();
+  } catch(err){
+    removeButtonLoading('btnAddSubUser');
+    logError('createSubUser', err);
+    showError('subuser_msg', 'Error creating sub user');
+  }
+}
+
+function resetSubUserForm(){
+  document.getElementById('subuser_userName').value = '';
+  document.getElementById('subuser_password').value = '';
+  document.getElementById('subuser_fname').value = '';
+  document.getElementById('subuser_lname').value = '';
+  document.getElementById('subuser_email').value = '';
+  document.getElementById('subuser_showForecast').checked = false;
+  editingSubUserId = null;
+  document.getElementById('btnAddSubUser').innerText = 'Create Sub User';
+}
+
+async function editSubUser(id){
+  try{
+    const r = await fetchJson(`${API_BASE_SUBUSERS}/${id}`, {headers:authHeader()});
+    if(handleApiError(r, 'subuser_msg', 'Failed to load sub user')) return;
+    
+    const user = r.data;
+    editingSubUserId = id;
+    
+    document.getElementById('subuser_userName').value = user.userName || '';
+    document.getElementById('subuser_fname').value = user.fname || '';
+    document.getElementById('subuser_lname').value = user.lname || '';
+    document.getElementById('subuser_email').value = user.userEmail || '';
+    document.getElementById('subuser_showForecast').checked = user.showForecast || false;
+    
+    document.getElementById('btnAddSubUser').innerText = 'Update Sub User';
+    document.getElementById('subuser_password').required = false;
+    
+    showSuccess('subuser_msg', 'Edit mode: Update fields and click Update Sub User');
+  } catch(err){
+    logError('editSubUser', err);
+    showError('subuser_msg', 'Error loading sub user');
+  }
+}
+
+async function suspendSubUser(id){
+  if(!confirm('Are you sure you want to suspend this sub user?')) return;
+  
+  try{
+    const r = await fetchJson(`${API_BASE_SUBUSERS}/${id}/suspend`, {
+      method: 'PUT',
+      headers: authHeader()
+    });
+    
+    if(handleApiError(r, 'subuser_msg', 'Failed to suspend sub user')) return;
+    showSuccess('subuser_msg', 'Sub user suspended successfully!');
+    loadSubUsers();
+  } catch(err){
+    logError('suspendSubUser', err);
+    showError('subuser_msg', 'Error suspending sub user');
+  }
+}
+
+async function activateSubUser(id){
+  if(!confirm('Are you sure you want to activate this sub user?')) return;
+  
+  try{
+    const r = await fetchJson(`${API_BASE_SUBUSERS}/${id}/activate`, {
+      method: 'PUT',
+      headers: authHeader()
+    });
+    
+    if(handleApiError(r, 'subuser_msg', 'Failed to activate sub user')) return;
+    showSuccess('subuser_msg', 'Sub user activated successfully!');
+    loadSubUsers();
+  } catch(err){
+    logError('activateSubUser', err);
+    showError('subuser_msg', 'Error activating sub user');
+  }
+}
+
+// ==================== SUB-USER FEATURE MANAGEMENT ====================
+
+async function manageSubUserFeatures(subUserId, subUserName){
+  showLoadingOverlay();
+  
+  try{
+    // Fetch sub-user features
+    const r = await fetchJson(`${API_SUBUSER_FEATURES}/${subUserId}/features`, {headers:authHeader()});
+    hideLoadingOverlay();
+    
+    if(!r.ok){
+      if(r.status === 404){
+        // API might not be implemented yet, show a message
+        showError('subuser_msg', 'Feature management API not implemented yet. Please check backend API.');
+        return;
+      }
+      handleApiError(r, 'subuser_msg', 'Failed to load sub-user features');
+      return;
+    }
+    
+    const featuresData = r.data || {};
+    const features = featuresData.features || [];
+    
+    // Create modal
+    const modalHtml = `
+      <div id="subUserFeaturesModal" onclick="if(event.target.id === 'subUserFeaturesModal') closeSubUserFeaturesModal()" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;">
+        <div style="background:#fff;border-radius:16px;max-width:800px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);position:relative;">
+          <button onclick="closeSubUserFeaturesModal()" style="position:absolute;top:15px;right:15px;background:#e74c3c;border:none;color:#fff;width:35px;height:35px;border-radius:50%;cursor:pointer;font-size:1.3rem;line-height:1;z-index:10001;box-shadow:0 2px 8px rgba(231,76,60,0.4);transition:all 0.3s;display:flex;align-items:center;justify-content:center;font-weight:bold;" onmouseover="this.style.background='#c0392b';this.style.transform='scale(1.1)'" onmouseout="this.style.background='#e74c3c';this.style.transform='scale(1)'" title="Close">×</button>
+          <div style="background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);color:#fff;padding:30px;border-radius:16px 16px 0 0;">
+            <h2 style="margin:0;font-size:1.8rem;font-weight:600;">Manage Features</h2>
+            <p style="margin:10px 0 0 0;opacity:0.9;">${escapeHtml(subUserName)}</p>
+          </div>
+          <div style="padding:30px;">
+            <p style="color:#7f8c8d;margin-bottom:10px;">Control which features are visible to this sub-user. Only features available in your plan can be enabled.</p>
+            <p style="color:#3498db;background:#e3f2fd;padding:12px;border-radius:8px;margin-bottom:20px;font-size:0.9rem;">
+              <strong>ℹ️ Default Access:</strong> Sub-users have Core features enabled by default. You can enable Premium features that are available in your plan.
+            </p>
+            <div id="subUserFeaturesList" style="max-height:400px;overflow-y:auto;">
+              ${features.length === 0 ? 
+                '<p style="color:#7f8c8d;text-align:center;padding:20px;">No features available</p>' :
+                features.map(feature => {
+                  const isAvailable = feature.available !== false && feature.available !== 'false';
+                  const isVisible = feature.visible !== false && feature.visible !== 'false';
+                  const isCore = (feature.category || '').toLowerCase() === 'core';
+                  const categoryColor = isCore ? '#27ae60' : feature.category === 'Premium' ? '#9b59b6' : '#7f8c8d';
+                  return `
+                    <label style="display:flex;align-items:center;gap:10px;padding:15px;background:${isAvailable ? '#fff' : '#f8f9fa'};margin-bottom:10px;border-radius:8px;cursor:${isAvailable ? 'pointer' : 'not-allowed'};border:2px solid ${isVisible && isAvailable ? '#27ae60' : '#e0e0e0'};opacity:${isAvailable ? '1' : '0.6'};border-left:4px solid ${categoryColor};">
+                      <input 
+                        type="checkbox" 
+                        ${isVisible && isAvailable ? 'checked' : ''}
+                        ${!isAvailable ? 'disabled' : ''}
+                        data-feature-code="${escapeHtml(feature.featureCode || feature.code || '')}"
+                        data-category="${escapeHtml(feature.category || 'Other')}"
+                        onchange="toggleSubUserFeatureVisibility(${subUserId}, '${escapeHtml(feature.featureCode || feature.code || '')}', this.checked)"
+                        style="width:20px;height:20px;cursor:${isAvailable ? 'pointer' : 'not-allowed'};"
+                      />
+                      <div style="flex:1;">
+                        <strong>${escapeHtml(feature.featureName || feature.name || 'N/A')}</strong>
+                        <div style="font-size:0.85rem;color:#7f8c8d;margin-top:4px;">
+                          <span style="color:${categoryColor};font-weight:500;">${escapeHtml(feature.category || 'Other')}</span>
+                          ${!isAvailable ? '<span style="color:#e74c3c;margin-left:10px;">(Not available in your plan)</span>' : ''}
+                          ${isVisible && isAvailable ? '<span style="color:#27ae60;margin-left:10px;">✓ Enabled</span>' : isAvailable ? '<span style="color:#7f8c8d;margin-left:10px;">Disabled</span>' : ''}
+                        </div>
+                      </div>
+                      <code style="background:#e9ecef;padding:6px 10px;border-radius:4px;font-size:0.85rem;">${escapeHtml(feature.featureCode || feature.code || 'N/A')}</code>
+                    </label>
+                  `;
+                }).join('')
+              }
+            </div>
+            <div style="margin-top:25px;padding-top:20px;border-top:2px solid #e0e0e0;display:flex;gap:10px;">
+              <button onclick="bulkUpdateSubUserFeatures(${subUserId})" style="flex:1;padding:12px 24px;background:linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
+                💾 Save All Changes
+              </button>
+              <button onclick="closeSubUserFeaturesModal()" style="flex:0 0 auto;padding:12px 24px;background:#ecf0f1;color:#34495e;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
+                Cancel
+              </button>
+            </div>
+            <div id="subUserFeaturesMsg" style="margin-top:15px;"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  } catch(err){
+    hideLoadingOverlay();
+    logError('manageSubUserFeatures', err);
+    showError('subuser_msg', 'Error loading sub-user features. API endpoint may not be implemented yet.');
+  }
+}
+
+function closeSubUserFeaturesModal(){
+  const modal = document.getElementById('subUserFeaturesModal');
+  if(modal) modal.remove();
+}
+
+async function toggleSubUserFeatureVisibility(subUserId, featureCode, visible){
+  try{
+    const r = await fetchJson(`${API_SUBUSER_FEATURES}/${subUserId}/features/${featureCode}/visibility`, {
+      method: 'PUT',
+      headers: authHeader(),
+      body: JSON.stringify({ 
+        isVisible: visible // ✅ Use isVisible instead of visible
+      })
+    });
+    
+    if(!r.ok){
+      if(r.status === 404){
+        showError('subUserFeaturesMsg', 'Feature visibility API not implemented yet. Please check backend API.');
+        return;
+      }
+      handleApiError(r, 'subUserFeaturesMsg', 'Failed to update feature visibility');
+      return;
+    }
+    
+    showSuccess('subUserFeaturesMsg', `Feature ${visible ? 'enabled' : 'disabled'} successfully!`);
+  } catch(err){
+    logError('toggleSubUserFeatureVisibility', err);
+    showError('subUserFeaturesMsg', 'Error updating feature visibility. API endpoint may not be implemented yet.');
+  }
+}
+
+async function bulkUpdateSubUserFeatures(subUserId){
+  const checkboxes = document.querySelectorAll('#subUserFeaturesList input[type="checkbox"]:not(:disabled)');
+  const featureUpdates = [];
+  
+  checkboxes.forEach(cb => {
+    const featureCode = cb.dataset.featureCode;
+    if(featureCode){
+      featureUpdates.push({
+        featureCode: featureCode,
+        isVisible: cb.checked // ✅ Use isVisible instead of visible
+      });
+    }
+  });
+  
+  try{
+    const r = await fetchJson(`${API_SUBUSER_FEATURES}/${subUserId}/features/visibility/bulk`, {
+      method: 'PUT',
+      headers: authHeader(),
+      body: JSON.stringify({ features: featureUpdates })
+    });
+    
+    if(!r.ok){
+      if(r.status === 404){
+        showError('subUserFeaturesMsg', 'Bulk feature update API not implemented yet. Please check backend API.');
+        return;
+      }
+      handleApiError(r, 'subUserFeaturesMsg', 'Failed to update features');
+      return;
+    }
+    
+    showSuccess('subUserFeaturesMsg', 'All feature changes saved successfully!');
+    setTimeout(() => {
+      closeSubUserFeaturesModal();
+      loadSubUsers(); // Refresh sub-users list
+    }, 1500);
+  } catch(err){
+    logError('bulkUpdateSubUserFeatures', err);
+    showError('subUserFeaturesMsg', 'Error saving features. API endpoint may not be implemented yet.');
+  }
+}
+
+// ==================== SUBSCRIPTION ====================
+
+async function loadOwnSubscription(){
+  try{
+    const r = await fetchJson(API_BASE_SUBSCRIPTION, {headers:authHeader()});
+    if(handleApiError(r, 'subscriptionContent', 'Failed to load subscription')) return;
+    
+    // Handle different API response structures
+    let subscription = {};
+    if(r.data){
+      // Check if data is nested in 'body'
+      if(r.data.body){
+        subscription = r.data.body;
+      } else {
+        subscription = r.data;
+      }
+    } else if(r.apiResponse && r.apiResponse.body){
+      subscription = r.apiResponse.body;
+    } else if(r.body){
+      subscription = r.body;
+    }
+    
+    displaySubscription(subscription);
+  } catch(err){
+    logError('loadOwnSubscription', err);
+    document.getElementById('subscriptionContent').innerHTML = '<p style="color:#e74c3c;">Error loading subscription</p>';
+  }
+}
+
+function displaySubscription(subscription){
+  const container = document.getElementById('subscriptionContent');
+  
+  if(!subscription || !subscription.planType){
+    container.innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">No subscription found</p>';
+    return;
+  }
+  
+  const html = `
+    <div class="subscription-card">
+      <h3>Subscription Details</h3>
+      <div class="subscription-info">
+        <div class="info-item">
+          <label>Plan Type</label>
+          <value>${escapeHtml(subscription.planType || 'N/A')}</value>
+        </div>
+        <div class="info-item">
+          <label>Status</label>
+          <value>
+            <span class="status-badge ${subscription.status === 'Active' ? 'status-active' : subscription.status === 'Suspended' ? 'status-suspended' : 'status-expired'}">
+              ${escapeHtml(subscription.status || 'N/A')}
+            </span>
+          </value>
+        </div>
+        <div class="info-item">
+          <label>Start Date</label>
+          <value>${subscription.startDate ? formatDateOnly(subscription.startDate) : 'N/A'}</value>
+        </div>
+        <div class="info-item">
+          <label>End Date</label>
+          <value>${subscription.endDate ? formatDateOnly(subscription.endDate) : 'N/A'}</value>
+        </div>
+        <div class="info-item">
+          <label>Max Sub Users</label>
+          <value>${escapeHtml(subscription.maxSubUsers || 0)}</value>
+        </div>
+        <div class="info-item">
+          <label>Current Sub Users</label>
+          <value>${escapeHtml(subscription.currentSubUserCount || subscription.currentSubUsers || subscription.usage?.subUsersCount || 0)}</value>
+        </div>
+        <div class="info-item">
+          <label>Remaining Sub Users</label>
+          <value>${escapeHtml(subscription.remainingSubUsers || (subscription.maxSubUsers - (subscription.currentSubUserCount || subscription.currentSubUsers || 0)) || 0)}</value>
+        </div>
+      </div>
+      ${subscription.usage ? `
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid #e0e0e0;">
+          <h4 style="margin-bottom:10px;">Usage Statistics</h4>
+          <pre style="background:#fff;padding:15px;border-radius:6px;overflow-x:auto;">${JSON.stringify(subscription.usage, null, 2)}</pre>
+        </div>
+      ` : ''}
+    </div>
+  `;
+  container.innerHTML = html;
+}
+
+// Helper functions
+function clearMessage(id){
+  const el = document.getElementById(id);
+  if(el) el.innerHTML = '';
+  el.className = '';
+}
+
+function showError(id, msg){
+  const el = document.getElementById(id);
+  if(el){
+    el.innerHTML = escapeHtml(msg);
+    el.className = 'error';
+  }
+}
+
+function showSuccess(id, msg){
+  const el = document.getElementById(id);
+  if(el){
+    el.innerHTML = escapeHtml(msg);
+    el.className = 'success';
+  }
+}
+
+function showLoading(id, msg){
+  const el = document.getElementById(id);
+  if(el){
+    el.innerHTML = escapeHtml(msg) + ' <span style="display:inline-block;animation:spin 1s linear infinite;">⏳</span>';
+    el.className = 'success';
+  }
+}
+
+function setButtonLoading(id, text){
+  const btn = document.getElementById(id);
+  if(btn){
+    btn.disabled = true;
+    btn.dataset.originalText = btn.innerText;
+    btn.innerText = text;
+  }
+}
+
+function removeButtonLoading(id){
+  const btn = document.getElementById(id);
+  if(btn){
+    btn.disabled = false;
+    btn.innerText = btn.dataset.originalText || 'Save';
+  }
+}
+
+function showLoadingOverlay(){
+  const overlay = document.createElement('div');
+  overlay.id = 'loadingOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = '<div style="background:#fff;padding:30px;border-radius:12px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);"><div style="font-size:2rem;margin-bottom:15px;">⏳</div><div style="color:#2c3e50;font-weight:500;">Loading...</div></div>';
+  document.body.appendChild(overlay);
+}
+
+function hideLoadingOverlay(){
+  const overlay = document.getElementById('loadingOverlay');
+  if(overlay) overlay.remove();
+}
+
+// Update nav position based on header height
+function updateNavPosition(){
+  const header = document.querySelector('.header');
+  const nav = document.querySelector('nav');
+  if(header && nav){
+    const headerHeight = header.offsetHeight;
+    nav.style.top = headerHeight + 'px';
+    document.body.style.paddingTop = (headerHeight + nav.offsetHeight) + 'px';
+  }
+}
+
+// Update on load and resize
+window.addEventListener('load', () => {
+  setTimeout(updateNavPosition, 100);
+});
+window.addEventListener('resize', updateNavPosition);
+
+// Update admin header with dark mode
+function updateAdminHeader(){
+  const header = document.getElementById('mainHeader');
+  if(header){
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const darkBtn = header.querySelector('button[onclick*="toggleDarkMode"]');
+    if(darkBtn){
+      darkBtn.innerHTML = isDark ? '☀️' : '🌙';
+    }
+  }
+}
+
+// Initialize dark mode and keyboard shortcuts
+if(typeof initDarkMode === 'function') initDarkMode();
+if(typeof initKeyboardShortcuts === 'function') initKeyboardShortcuts();
+if(typeof updateNavPosition === 'function') {
+  window.addEventListener('load', () => {
+    setTimeout(updateNavPosition, 100);
+  });
+  window.addEventListener('resize', updateNavPosition);
+}
+
+// ==================== LOGIN TRACKING ====================
+let chartLoginDailyTrends = null;
+let chartLoginUserSummary = null;
+let chartLoginStatus = null;
+let loginTrackingCurrentPage = 1;
+let loginTrackingFilters = { fromDate: null, toDate: null, userType: null, userId: null };
+
+async function loadLoginTrackingTab(){
+  const container = document.getElementById('logintrackingContent');
+  if(!container) return;
+  
+  const html = `
+    <h2>🔐 Login Tracking</h2>
+    <p style="color:#7f8c8d;margin-bottom:20px;">Monitor user login activity and statistics</p>
+    
+    <!-- Statistics Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:30px;">
+      <div class="stat-card" style="border-top-color:#3498db;">
+        <p>Total Logins</p>
+        <h3 id="loginTotalLogins">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#27ae60;">
+        <p>Successful</p>
+        <h3 id="loginSuccessfulLogins">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#e74c3c;">
+        <p>Failed</p>
+        <h3 id="loginFailedLogins">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#9b59b6;">
+        <p>Unique Users</p>
+        <h3 id="loginUniqueUsers">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#f39c12;">
+        <p>Active Today</p>
+        <h3 id="loginActiveToday">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#1abc9c;">
+        <p>Active This Week</p>
+        <h3 id="loginActiveWeek">0</h3>
+      </div>
+      <div class="stat-card" style="border-top-color:#e67e22;">
+        <p>Active This Month</p>
+        <h3 id="loginActiveMonth">0</h3>
+      </div>
+    </div>
+    
+    <!-- Filters -->
+    <div style="background:#f8f9fa;padding:20px;border-radius:12px;margin-bottom:25px;border:2px solid #e0e0e0;">
+      <h3 style="margin-top:0;margin-bottom:15px;">🔍 Filters</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:15px;">
+        <div>
+          <label style="display:block;margin-bottom:8px;color:#7f8c8d;font-weight:500;">From Date</label>
+          <input type="date" id="loginFromDate" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:6px;" />
+        </div>
+        <div>
+          <label style="display:block;margin-bottom:8px;color:#7f8c8d;font-weight:500;">To Date</label>
+          <input type="date" id="loginToDate" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:6px;" />
+        </div>
+        <div>
+          <label style="display:block;margin-bottom:8px;color:#7f8c8d;font-weight:500;">User Type</label>
+          <select id="loginUserType" style="width:100%;padding:10px;border:2px solid #e0e0e0;border-radius:6px;">
+            <option value="">All Types</option>
+            <option value="SuperAdmin">Super Admin</option>
+            <option value="Admin">Admin</option>
+            <option value="SubUser">Sub User</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;margin-bottom:8px;color:#7f8c8d;font-weight:500;">Quick Filters</label>
+          <div style="display:flex;gap:8px;">
+            <button onclick="setLoginQuickFilter('today')" style="flex:1;padding:10px;background:#e3f2fd;color:#1976d2;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;">Today</button>
+            <button onclick="setLoginQuickFilter('week')" style="flex:1;padding:10px;background:#e3f2fd;color:#1976d2;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;">Week</button>
+            <button onclick="setLoginQuickFilter('month')" style="flex:1;padding:10px;background:#e3f2fd;color:#1976d2;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;">Month</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="applyLoginFilters()" style="padding:10px 20px;background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:500;">🔍 Apply Filters</button>
+        <button onclick="clearLoginFilters()" style="padding:10px 20px;background:#ecf0f1;color:#34495e;border:none;border-radius:8px;cursor:pointer;font-weight:500;">🗑️ Clear</button>
+      </div>
+    </div>
+    
+    <!-- Charts Section -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(400px, 1fr));gap:20px;margin-bottom:30px;">
+      <div style="background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+        <h3>Daily Login Trends</h3>
+        <p style="color:#7f8c8d;font-size:0.9rem;margin-bottom:15px;">Login activity over time</p>
+        <canvas id="chart-login-daily-trends" style="max-height:300px;"></canvas>
+      </div>
+      <div style="background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+        <h3>User Login Summary</h3>
+        <p style="color:#7f8c8d;font-size:0.9rem;margin-bottom:15px;">Top users by login count</p>
+        <canvas id="chart-login-user-summary" style="max-height:300px;"></canvas>
+      </div>
+      <div style="background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+        <h3>Login Status Distribution</h3>
+        <p style="color:#7f8c8d;font-size:0.9rem;margin-bottom:15px;">Success vs Failed logins</p>
+        <canvas id="chart-login-status" style="max-height:300px;"></canvas>
+      </div>
+    </div>
+    
+    <!-- Recent Logins -->
+    <div style="background:#f8f9fa;padding:20px;border-radius:12px;margin-bottom:25px;border:2px solid #e0e0e0;">
+      <h3 style="margin-top:0;margin-bottom:15px;">Recent Login Activity</h3>
+      <div id="recentLoginsList" style="max-height:200px;overflow-y:auto;">
+        <p style="color:#7f8c8d;text-align:center;padding:20px;">Loading recent logins...</p>
+      </div>
+    </div>
+    
+    <!-- Activity Table -->
+    <div>
+      <h3 style="margin-bottom:15px;">Login Activity Log</h3>
+      <div id="loginActivityTable" style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);color:#fff;">
+              <th style="padding:12px;text-align:left;">Date/Time</th>
+              <th>User</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>IP Address</th>
+              <th>User Agent</th>
+            </tr>
+          </thead>
+          <tbody id="loginActivityBody">
+            <tr><td colspan="6" style="text-align:center;padding:20px;color:#7f8c8d;">Loading activity...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="loginActivityPagination" style="margin-top:15px;"></div>
+    </div>
+    
+    <div id="login_msg" style="margin-top:15px;"></div>
+  `;
+  
+  container.innerHTML = html;
+  
+  // Load statistics and activity
+  await loadLoginStatistics();
+  await loadLoginActivity(1);
+}
+
+async function loadLoginStatistics(){
+  try{
+    const params = new URLSearchParams();
+    if(loginTrackingFilters.fromDate) params.append('fromDate', loginTrackingFilters.fromDate);
+    if(loginTrackingFilters.toDate) params.append('toDate', loginTrackingFilters.toDate);
+    if(loginTrackingFilters.userType) params.append('userType', loginTrackingFilters.userType);
+    if(loginTrackingFilters.userId) params.append('userId', loginTrackingFilters.userId);
+    
+    const url = `${API_LOGIN_TRACKING}/statistics${params.toString() ? '?' + params.toString() : ''}`;
+    console.log('Loading login statistics from:', url);
+    const r = await fetchJson(url, {headers: authHeader()});
+    
+    if(!r.ok){
+      console.error('Login statistics API error:', r);
+      if(r.status === 403){
+        showError('login_msg', 'You do not have permission to view login statistics');
+        return;
+      }
+      if(r.status === 404){
+        showError('login_msg', 'Login Tracking API endpoint not found. Please check if the API is running.');
+        return;
+      }
+      handleApiError(r, 'login_msg', 'Failed to load login statistics');
+      return;
+    }
+    
+    // Handle different API response formats
+    let stats = {};
+    if(r.data){
+      stats = r.data;
+    } else if(r.apiResponse && r.apiResponse.body){
+      stats = r.apiResponse.body;
+    } else if(r.body){
+      stats = r.body;
+    } else if(r.status && r.status === true && r.body){
+      stats = r.body;
+    }
+    
+    console.log('Login statistics loaded:', stats);
+    
+    // Update statistics cards
+    const updateEl = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val || 0; };
+    updateEl('loginTotalLogins', stats.totalLogins);
+    updateEl('loginSuccessfulLogins', stats.successfulLogins);
+    updateEl('loginFailedLogins', stats.failedLogins);
+    updateEl('loginUniqueUsers', stats.uniqueUsers);
+    updateEl('loginActiveToday', stats.activeUsersToday);
+    updateEl('loginActiveWeek', stats.activeUsersThisWeek);
+    updateEl('loginActiveMonth', stats.activeUsersThisMonth);
+    
+    // Update recent logins
+    const recentLogins = stats.recentLogins || [];
+    const recentLoginsList = document.getElementById('recentLoginsList');
+    if(recentLoginsList){
+      if(recentLogins.length === 0){
+        recentLoginsList.innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">No recent logins</p>';
+      } else {
+        recentLoginsList.innerHTML = recentLogins.slice(0, 10).map(login => `
+          <div style="display:flex;justify-content:space-between;padding:10px;background:#fff;border-radius:6px;margin-bottom:8px;border-left:3px solid ${login.loginStatus === 'success' ? '#27ae60' : '#e74c3c'};">
+            <div>
+              <strong>${escapeHtml(login.userName || 'N/A')}</strong>
+              <span style="color:#7f8c8d;font-size:0.85rem;margin-left:10px;">${login.userType || 'N/A'}</span>
+            </div>
+            <div>
+              <span style="padding:4px 8px;border-radius:4px;font-size:0.8rem;background:${login.loginStatus === 'success' ? '#d4edda' : '#f8d7da'};color:${login.loginStatus === 'success' ? '#155724' : '#721c24'};">
+                ${login.loginStatus === 'success' ? '✓ Success' : '✗ Failed'}
+              </span>
+              <span style="color:#7f8c8d;font-size:0.85rem;margin-left:10px;">
+                ${login.createdAt ? formatDateOnly(login.createdAt) : 'N/A'}
+              </span>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+    
+    // Update Daily Trends Chart
+    const dailyCounts = stats.dailyLoginCounts || [];
+    const ctxDailyTrends = document.getElementById('chart-login-daily-trends');
+    if(ctxDailyTrends && dailyCounts.length > 0 && typeof Chart !== 'undefined'){
+      const ctx = ctxDailyTrends.getContext('2d');
+      if(chartLoginDailyTrends) chartLoginDailyTrends.destroy();
+      chartLoginDailyTrends = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dailyCounts.slice(-30).map(d => formatDateOnly(d.date)),
+          datasets: [{
+            label: 'Login Count',
+            data: dailyCounts.slice(-30).map(d => d.loginCount || 0),
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 3
+          }, {
+            label: 'Unique Users',
+            data: dailyCounts.slice(-30).map(d => d.uniqueUsers || 0),
+            borderColor: '#27ae60',
+            backgroundColor: 'rgba(39, 174, 96, 0.1)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: true },
+            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+    
+    // Update User Summary Chart
+    const userSummary = stats.userLoginSummary || [];
+    const ctxUserSummary = document.getElementById('chart-login-user-summary');
+    if(ctxUserSummary && userSummary.length > 0 && typeof Chart !== 'undefined'){
+      const ctx = ctxUserSummary.getContext('2d');
+      if(chartLoginUserSummary) chartLoginUserSummary.destroy();
+      const topUsers = userSummary.slice(0, 10);
+      chartLoginUserSummary = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: topUsers.map(u => (u.userName || `User ${u.userId}`).substring(0, 15)),
+          datasets: [{
+            label: 'Successful',
+            data: topUsers.map(u => u.successfulLogins || 0),
+            backgroundColor: '#27ae60'
+          }, {
+            label: 'Failed',
+            data: topUsers.map(u => u.failedLogins || 0),
+            backgroundColor: '#e74c3c'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: true },
+            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+    
+    // Update Login Status Chart
+    const ctxStatus = document.getElementById('chart-login-status');
+    if(ctxStatus && typeof Chart !== 'undefined'){
+      const ctx = ctxStatus.getContext('2d');
+      if(chartLoginStatus) chartLoginStatus.destroy();
+      chartLoginStatus = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Successful', 'Failed'],
+          datasets: [{
+            data: [stats.successfulLogins || 0, stats.failedLogins || 0],
+            backgroundColor: ['#27ae60', '#e74c3c'],
+            borderWidth: 3,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
+          }
+        }
+      });
+    }
+    
+  } catch(err){
+    console.error('loadLoginStatistics error:', err);
+    logError('loadLoginStatistics', err);
+    showError('login_msg', `Failed to load login statistics: ${err.message || 'Unknown error'}`);
+  }
+}
+
+async function loadLoginActivity(page = 1){
+  try{
+    loginTrackingCurrentPage = page;
+    
+    const params = new URLSearchParams();
+    if(loginTrackingFilters.fromDate) params.append('fromDate', loginTrackingFilters.fromDate);
+    if(loginTrackingFilters.toDate) params.append('toDate', loginTrackingFilters.toDate);
+    if(loginTrackingFilters.userType) params.append('userType', loginTrackingFilters.userType);
+    if(loginTrackingFilters.userId) params.append('userId', loginTrackingFilters.userId);
+    params.append('page', page);
+    params.append('limit', 20);
+    
+    const url = `${API_LOGIN_TRACKING}/activity${params.toString() ? '?' + params.toString() : ''}`;
+    console.log('Loading login activity from:', url);
+    const r = await fetchJson(url, {headers: authHeader()});
+    
+    if(!r.ok){
+      console.error('Login activity API error:', r);
+      if(r.status === 403){
+        showError('login_msg', 'You do not have permission to view login activity');
+        return;
+      }
+      if(r.status === 404){
+        showError('login_msg', 'Login Activity API endpoint not found. Please check if the API is running.');
+        return;
+      }
+      handleApiError(r, 'login_msg', 'Failed to load login activity');
+      return;
+    }
+    
+    // Handle different API response formats
+    let activity = {};
+    if(r.data){
+      activity = r.data;
+    } else if(r.apiResponse && r.apiResponse.body){
+      activity = r.apiResponse.body;
+    } else if(r.body){
+      activity = r.body;
+    } else if(r.status && r.status === true && r.body){
+      activity = r.body;
+    }
+    
+    const items = activity.items || activity.data || [];
+    const pagination = activity.pagination || { page: 1, totalPages: 1, hasNext: false, hasPrevious: false };
+    
+    console.log('Login activity loaded:', { itemsCount: items.length, pagination });
+    
+    // Render table
+    const tbody = document.getElementById('loginActivityBody');
+    if(tbody){
+      if(items.length === 0){
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#7f8c8d;">No login activity found</td></tr>';
+      } else {
+        tbody.innerHTML = items.map(item => {
+          const statusColor = item.loginStatus === 'success' ? '#155724' : '#721c24';
+          const statusBg = item.loginStatus === 'success' ? '#d4edda' : '#f8d7da';
+          return `
+            <tr style="border-bottom:1px solid #ecf0f1;">
+              <td style="padding:12px;">
+                ${item.createdAt ? formatDate(item.createdAt) : 'N/A'}<br>
+                <small style="color:#7f8c8d;">${item.createdAt ? formatRelativeTime(item.createdAt) : ''}</small>
+              </td>
+              <td style="padding:12px;">
+                <strong>${escapeHtml(item.userName || 'N/A')}</strong><br>
+                <small style="color:#7f8c8d;">${escapeHtml(item.userCode || '')}</small>
+              </td>
+              <td style="padding:12px;">${escapeHtml(item.userType || 'N/A')}</td>
+              <td style="padding:12px;">
+                <span style="padding:4px 8px;border-radius:4px;font-size:0.85rem;background:${statusBg};color:${statusColor};">
+                  ${item.loginStatus === 'success' ? '✓ Success' : '✗ Failed'}
+                </span>
+                ${item.failureReason ? `<br><small style="color:#721c24;font-size:0.8rem;">${escapeHtml(item.failureReason)}</small>` : ''}
+              </td>
+              <td style="padding:12px;">${escapeHtml(item.ipAddress || 'N/A')}</td>
+              <td style="padding:12px;" title="${escapeHtml(item.userAgent || 'N/A')}">
+                ${(item.userAgent || 'N/A').substring(0, 50)}${(item.userAgent || '').length > 50 ? '...' : ''}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+    
+    // Render pagination
+    const paginationDiv = document.getElementById('loginActivityPagination');
+    if(paginationDiv && pagination.totalPages > 1){
+      if(typeof createPagination === 'function'){
+        createPagination('loginActivityPagination', pagination.totalPages, pagination.page, (p) => loadLoginActivity(p));
+      } else {
+        // Simple pagination
+        let pagHtml = '<div style="display:flex;gap:5px;justify-content:center;">';
+        if(pagination.hasPrevious){
+          pagHtml += `<button onclick="loadLoginActivity(${pagination.page - 1})" style="padding:8px 12px;background:#3498db;color:#fff;border:none;border-radius:4px;cursor:pointer;">Previous</button>`;
+        }
+        pagHtml += `<span style="padding:8px 12px;">Page ${pagination.page} of ${pagination.totalPages}</span>`;
+        if(pagination.hasNext){
+          pagHtml += `<button onclick="loadLoginActivity(${pagination.page + 1})" style="padding:8px 12px;background:#3498db;color:#fff;border:none;border-radius:4px;cursor:pointer;">Next</button>`;
+        }
+        pagHtml += '</div>';
+        paginationDiv.innerHTML = pagHtml;
+      }
+    } else if(paginationDiv){
+      paginationDiv.innerHTML = '';
+    }
+    
+  } catch(err){
+    console.error('loadLoginActivity error:', err);
+    logError('loadLoginActivity', err);
+    showError('login_msg', `Failed to load login activity: ${err.message || 'Unknown error'}`);
+  }
+}
+
+function applyLoginFilters(){
+  const fromDate = document.getElementById('loginFromDate')?.value;
+  const toDate = document.getElementById('loginToDate')?.value;
+  const userType = document.getElementById('loginUserType')?.value;
+  
+  loginTrackingFilters = {
+    fromDate: fromDate || null,
+    toDate: toDate || null,
+    userType: userType || null,
+    userId: null
+  };
+  
+  loadLoginStatistics();
+  loadLoginActivity(1);
+}
+
+function clearLoginFilters(){
+  const fromDateEl = document.getElementById('loginFromDate');
+  const toDateEl = document.getElementById('loginToDate');
+  const userTypeEl = document.getElementById('loginUserType');
+  if(fromDateEl) fromDateEl.value = '';
+  if(toDateEl) toDateEl.value = '';
+  if(userTypeEl) userTypeEl.value = '';
+  
+  loginTrackingFilters = { fromDate: null, toDate: null, userType: null, userId: null };
+  
+  loadLoginStatistics();
+  loadLoginActivity(1);
+}
+
+function setLoginQuickFilter(range){
+  const today = new Date();
+  let fromDate, toDate;
+  
+  switch(range){
+    case 'today':
+      fromDate = new Date(today);
+      toDate = new Date(today);
+      break;
+    case 'week':
+      fromDate = new Date(today);
+      fromDate.setDate(today.getDate() - 7);
+      toDate = new Date(today);
+      break;
+    case 'month':
+      fromDate = new Date(today);
+      fromDate.setDate(today.getDate() - 30);
+      toDate = new Date(today);
+      break;
+    default:
+      return;
+  }
+  
+  const fromDateEl = document.getElementById('loginFromDate');
+  const toDateEl = document.getElementById('loginToDate');
+  if(fromDateEl) fromDateEl.value = fromDate.toISOString().split('T')[0];
+  if(toDateEl) toDateEl.value = toDate.toISOString().split('T')[0];
+  applyLoginFilters();
+}
+
+// Load sub users on page load
+loadSubUsers();
+</script>
+</body>
+</html>
+
