@@ -1,6 +1,7 @@
 // app.js - common helpers for pages
 // API Configuration - Change this to switch between local and production
-const API_BASE = "http://localhost/api";
+// Production API: https://businessmanagementapi.onrender.com
+const API_BASE = "https://businessmanagementapi.onrender.com/api";
 
 /**
  * SECURITY FIX #1: XSS Protection

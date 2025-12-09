@@ -1380,7 +1380,7 @@ async function loadDashboard(){
           const msgEl = document.createElement('div');
           msgEl.id = 'dashboardErrorMsg';
           msgEl.style.cssText = 'background:#fff3cd;border:2px solid #ffc107;padding:15px;border-radius:8px;margin:20px;color:#856404;';
-          msgEl.innerHTML = '<strong>⚠️ CORS Error:</strong> Cannot access dashboard API. Please check backend CORS configuration to allow requests from <code>http://localhost:8000</code>';
+          msgEl.innerHTML = '<strong>⚠️ CORS Error:</strong> Cannot access dashboard API. Please check backend CORS configuration to allow requests from your domain.';
           const dashboardContent = document.getElementById('dashboard-content');
           if(dashboardContent) dashboardContent.insertBefore(msgEl, dashboardContent.firstChild);
           return msgEl;
@@ -5180,7 +5180,7 @@ async function loadReportHistory(){
         <div style="padding:20px;text-align:center;background:var(--bg-secondary);border-radius:8px;border:2px dashed var(--border-color);">
           <p style="color:var(--text-primary);font-weight:600;margin-bottom:10px;">⚠️ API Endpoint Not Implemented</p>
           <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:5px;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_REPORTS}/history</code> is not available yet.</p>
-          <p style="color:var(--text-tertiary);font-size:0.85rem;">Please check Swagger documentation at <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="color:var(--text-tertiary);font-size:0.85rem;">Please check Swagger documentation at <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
       return;
@@ -5236,7 +5236,7 @@ async function loadReportHistory(){
         <div style="padding:20px;text-align:center;background:var(--bg-secondary);border-radius:8px;border:2px dashed var(--border-color);">
           <p style="color:var(--text-primary);font-weight:600;margin-bottom:10px;">⚠️ API Endpoint Not Implemented</p>
           <p style="color:var(--text-secondary);font-size:0.9rem;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_REPORTS}/history</code> is not available yet.</p>
-          <p style="color:var(--text-tertiary);font-size:0.85rem;margin-top:10px;">Check Swagger: <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="color:var(--text-tertiary);font-size:0.85rem;margin-top:10px;">Check Swagger: <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
     } else {
@@ -5623,7 +5623,7 @@ async function loadAuditLogs(page = 1){
         <div style="padding:20px;text-align:center;background:var(--bg-secondary);border-radius:8px;border:2px dashed var(--border-color);">
           <p style="color:var(--text-primary);font-weight:600;margin-bottom:10px;">⚠️ API Endpoint Not Implemented</p>
           <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:5px;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_AUDIT}</code> is not available yet.</p>
-          <p style="color:var(--text-tertiary);font-size:0.85rem;">Please check Swagger documentation at <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="color:var(--text-tertiary);font-size:0.85rem;">Please check Swagger documentation at <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
       return;
@@ -5688,7 +5688,7 @@ async function loadAuditLogs(page = 1){
         <div style="padding:20px;text-align:center;background:var(--bg-secondary);border-radius:8px;border:2px dashed var(--border-color);">
           <p style="color:var(--text-primary);font-weight:600;margin-bottom:10px;">⚠️ API Endpoint Not Implemented</p>
           <p style="color:var(--text-secondary);font-size:0.9rem;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_AUDIT}</code> is not available yet.</p>
-          <p style="color:var(--text-tertiary);font-size:0.85rem;margin-top:10px;">Check Swagger: <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="color:var(--text-tertiary);font-size:0.85rem;margin-top:10px;">Check Swagger: <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
     } else {
@@ -5862,7 +5862,7 @@ async function loadReminders(type, status){
         <div style="padding:20px;text-align:center;background:var(--bg-secondary);border-radius:8px;border:2px dashed var(--border-color);">
           <p style="color:var(--text-primary);font-weight:600;margin-bottom:10px;">⚠️ API Endpoint Not Implemented</p>
           <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:5px;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_REMINDERS}</code> is not available yet.</p>
-          <p style="color:var(--text-tertiary);font-size:0.85rem;">Please check Swagger documentation at <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="color:var(--text-tertiary);font-size:0.85rem;">Please check Swagger documentation at <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
       return;
@@ -5914,7 +5914,7 @@ async function loadReminders(type, status){
         <div style="padding:20px;text-align:center;background:var(--bg-secondary);border-radius:8px;border:2px dashed var(--border-color);">
           <p style="color:var(--text-primary);font-weight:600;margin-bottom:10px;">⚠️ API Endpoint Not Implemented</p>
           <p style="color:var(--text-secondary);font-size:0.9rem;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_REMINDERS}</code> is not available yet.</p>
-          <p style="color:var(--text-tertiary);font-size:0.85rem;margin-top:10px;">Check Swagger: <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="color:var(--text-tertiary);font-size:0.85rem;margin-top:10px;">Check Swagger: <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
     } else {
@@ -6097,7 +6097,7 @@ async function performGlobalSearch(){
         <div style="padding:20px;text-align:center;background:var(--bg-secondary);border-radius:8px;border:2px dashed var(--border-color);">
           <p style="color:var(--text-primary);font-weight:600;margin-bottom:10px;">⚠️ API Endpoint Not Implemented</p>
           <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:5px;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_SEARCH}</code> is not available yet.</p>
-          <p style="color:var(--text-tertiary);font-size:0.85rem;">Please check Swagger documentation at <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="color:var(--text-tertiary);font-size:0.85rem;">Please check Swagger documentation at <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
       return;
@@ -6175,7 +6175,7 @@ async function performGlobalSearch(){
         <div style="padding:20px;text-align:center;background:var(--bg-secondary);border-radius:8px;border:2px dashed var(--border-color);">
           <p style="color:var(--text-primary);font-weight:600;margin-bottom:10px;">⚠️ API Endpoint Not Implemented</p>
           <p style="color:var(--text-secondary);font-size:0.9rem;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_SEARCH}</code> is not available yet.</p>
-          <p style="color:var(--text-tertiary);font-size:0.85rem;margin-top:10px;">Check Swagger: <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="color:var(--text-tertiary);font-size:0.85rem;margin-top:10px;">Check Swagger: <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
     } else {
@@ -6433,7 +6433,7 @@ async function loadDashboardLayout(){
         <div style="padding:20px;text-align:center;background:var(--bg-secondary);border-radius:8px;border:2px dashed var(--border-color);">
           <p style="color:var(--text-primary);font-weight:600;margin-bottom:10px;">⚠️ API Endpoint Not Implemented</p>
           <p style="color:var(--text-secondary);font-size:0.9rem;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_BASE}/DashboardCustomization/layout</code> is not available yet.</p>
-          <p style="color:var(--text-tertiary);font-size:0.85rem;margin-top:10px;">Check Swagger: <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="color:var(--text-tertiary);font-size:0.85rem;margin-top:10px;">Check Swagger: <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
     }
@@ -6629,7 +6629,7 @@ async function checkDuplicates(){
         <div class="validation-result error">
           <strong style="color:var(--text-primary);">⚠️ API Endpoint Not Implemented</strong>
           <p style="margin:5px 0 0 0;color:var(--text-secondary);font-size:0.9rem;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_VALIDATION}/check-duplicates</code> is not available yet.</p>
-          <p style="margin:5px 0 0 0;color:var(--text-tertiary);font-size:0.85rem;">Check Swagger: <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="margin:5px 0 0 0;color:var(--text-tertiary);font-size:0.85rem;">Check Swagger: <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
       return;
@@ -6707,7 +6707,7 @@ async function validateData(){
         <div class="validation-result error">
           <strong style="color:var(--text-primary);">⚠️ API Endpoint Not Implemented</strong>
           <p style="margin:5px 0 0 0;color:var(--text-secondary);font-size:0.9rem;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_VALIDATION}/validate</code> is not available yet.</p>
-          <p style="margin:5px 0 0 0;color:var(--text-tertiary);font-size:0.85rem;">Check Swagger: <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="margin:5px 0 0 0;color:var(--text-tertiary);font-size:0.85rem;">Check Swagger: <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
       return;
@@ -6775,7 +6775,7 @@ async function getQualityReport(){
         <div class="validation-result error">
           <strong style="color:var(--text-primary);">⚠️ API Endpoint Not Implemented</strong>
           <p style="margin:5px 0 0 0;color:var(--text-secondary);font-size:0.9rem;">The endpoint <code style="background:var(--bg-primary);padding:2px 6px;border-radius:4px;">${API_VALIDATION}/quality-report</code> is not available yet.</p>
-          <p style="margin:5px 0 0 0;color:var(--text-tertiary);font-size:0.85rem;">Check Swagger: <a href="http://localhost/swagger/index.html" target="_blank" style="color:#3498db;">http://localhost/swagger/index.html</a></p>
+          <p style="margin:5px 0 0 0;color:var(--text-tertiary);font-size:0.85rem;">Check Swagger: <a href="https://businessmanagementapi.onrender.com/swagger/index.html" target="_blank" style="color:#3498db;">https://businessmanagementapi.onrender.com/swagger/index.html</a></p>
         </div>
       `;
       return;

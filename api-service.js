@@ -4,7 +4,7 @@
  */
 
 class BusinessApiService {
-  constructor(baseUrl = 'http://localhost/api') {
+  constructor(baseUrl = 'https://businessmanagementapi.onrender.com/api') {
     this.baseUrl = baseUrl;
   }
 

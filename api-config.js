@@ -6,16 +6,17 @@
  * 
  * Usage:
  *   - For local development: Set API_BASE to "http://localhost/api"
- *   - For production: Set API_BASE to "https://businessapi-njcw.onrender.com/api"
+ *   - For production: Set API_BASE to "https://businessmanagementapi.onrender.com/api"
  */
 
 // API Configuration
 const API_CONFIG = {
   // Base URL for the API
-  BASE_URL: "http://localhost/api",
+  // Production API deployed at: https://businessmanagementapi.onrender.com
+  BASE_URL: "https://businessmanagementapi.onrender.com/api",
   
-  // Alternative: Production URL
-  // BASE_URL: "https://businessapi-njcw.onrender.com/api",
+  // Alternative: Local Development URL
+  // BASE_URL: "http://localhost/api",
   
   // API Endpoints
   ENDPOINTS: {
@@ -26,10 +27,10 @@ const API_CONFIG = {
   },
   
   // Swagger Documentation URL
-  SWAGGER_URL: "http://localhost/swagger/index.html",
+  SWAGGER_URL: "https://businessmanagementapi.onrender.com/swagger/index.html",
   
   // Environment
-  ENVIRONMENT: "local" // "local" or "production"
+  ENVIRONMENT: "production" // "local" or "production"
 };
 
 // Export for use in other files
